@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pixel Grid — Cooperative Game</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #080812;
+      color: #ccc;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    header {
+      width: 100%;
+      max-width: 860px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0 14px;
+      border-bottom: 1px solid #1a1a36;
+      margin-bottom: 14px;
+    }
+    header h1 {
+      font-size: 18px;
+      letter-spacing: 3px;
+      color: #7b8ff5;
+      text-transform: uppercase;
+    }
+    #status {
+      font-size: 12px;
+      color: #55cc88;
+      background: #0d1a0d;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #1a3a1a;
+    }
+    #canvas-wrap {
+      border: 2px solid #1e1e3a;
+      box-shadow: 0 0 40px rgba(100, 100, 255, 0.08);
+    }
+    #gameCanvas { display: block; image-rendering: pixelated; }
+    footer {
+      margin-top: 14px;
+      font-size: 11px;
+      color: #444466;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    footer span { color: #6666aa; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pixel Grid</h1>
+    <div id="status">Connecting…</div>
+  </header>
+  <div id="canvas-wrap">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+  <footer>
+    WASD / Arrow Keys to move &nbsp;·&nbsp;
+    Open in multiple tabs to play cooperatively &nbsp;·&nbsp;
+    Built with <span>Scala + Scala.js</span>
+  </footer>
+  <script src="/main.js"></script>
+</body>
+</html>

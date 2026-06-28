@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Pixel Grid Game"
+version = "1.0.0"
+id = "artifacts/pixel-game"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24402
+
+[services.development]
+run = "pnpm --filter @workspace/pixel-game run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/pixel-game", "run", "build" ]
+publicDir = "artifacts/pixel-game/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24402"
+BASE_PATH = "/"

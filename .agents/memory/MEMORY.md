@@ -1,0 +1,1 @@
+- [Scala game stack](scala-game-stack.md) — Full Scala stack (Scala.js client + http4s server) in a pnpm monorepo; key gotchas on port conflicts, SBT startup timeout, and Scala.js JS interop.

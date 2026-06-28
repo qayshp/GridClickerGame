@@ -1,24 +1,21 @@
-# [Project name]
+# Pixel Grid — Cooperative Game
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A cooperative pixel art grid game where multiple players move characters on a shared 30×20 grid in real time. Full Scala stack: Scala.js client + http4s WebSocket server.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- **Scala Game Server** workflow — `cd game && SCALA_PORT=9000 sbt "client/fastLinkJS; server/run"` (compiles Scala.js then starts http4s on port 9000)
+- **artifacts/pixel-game: web** workflow — `pnpm --filter @workspace/pixel-game run dev` (vite dev server, proxies `/ws` → Scala server)
+- To recompile Scala.js only: `cd game && sbt client/fastLinkJS`
+- To restart the server only: kill the workflow and rerun (SBT caches, restarts in ~5s)
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- **Game client**: Scala.js 1.18.2 + scalajs-dom, compiled to `game/client/target/scala-3.3.4/client-fastopt/main.js`
+- **Game server**: Scala 3.3.4 + http4s-ember (WebSocket) + cats-effect + upickle
+- **Frontend shell**: Vite dev server at `/` (serves the compiled Scala.js + proxies `/ws`)
+- **Shared protocol**: `game/shared/` cross-compiled for JVM + Scala.js (upickle JSON)
+- SBT 1.10.11, Java GraalVM 22.3.1
 
 ## Where things live
 
