@@ -130,15 +130,6 @@ object Main:
     ws.onerror = (_: Event) =>
       status.textContent = "Connection error."
 
-    dom.document.addEventListener("keydown", (e: KeyboardEvent) =>
-      if connected then
-        e.key match
-          case "ArrowUp"    | "w" | "W" => e.preventDefault(); send(ClientMsg.Move(0, -1))
-          case "ArrowDown"  | "s" | "S" => e.preventDefault(); send(ClientMsg.Move(0, 1))
-          case "ArrowLeft"  | "a" | "A" => e.preventDefault(); send(ClientMsg.Move(-1, 0))
-          case "ArrowRight" | "d" | "D" => e.preventDefault(); send(ClientMsg.Move(1, 0))
-          case _ => ()
-    )
 
   def send(msg: ClientMsg): Unit =
     if ws != null && ws.readyState == WebSocket.OPEN then

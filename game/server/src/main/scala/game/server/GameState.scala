@@ -7,6 +7,7 @@ import fs2.*
 import game.shared.*
 import upickle.default.*
 import scala.util.Random
+import scala.concurrent.duration.*
 
 val GRID_W      = 30
 val GRID_H      = 20
@@ -45,6 +46,8 @@ class GameState(
   colorIdxRef:   Ref[IO, Int],
   foodRef:       Ref[IO, Set[(Int, Int)]]
 ):
+  private val DIRS = Vector((0,-1),(0,1),(-1,0),(1,0))
+
   private def broadcastCurrent(): IO[Unit] =
     for
       ps   <- playersRef.get
@@ -109,13 +112,10 @@ class GameState(
         _ <- broadcastCurrent()
       yield ()
 
-    case ClientMsg.Move(dx, dy) =>
-      for
-        connPlayer <- connPlayerRef.get
-        _          <- connPlayer.get(connId).traverse_(handleMove(connId, _, dx, dy))
-      yield ()
+    case ClientMsg.Move(_, _) => IO.unit   // movement is server-driven
 
-  private def handleMove(connId: String, playerId: String, dx: Int, dy: Int): IO[Unit] =
+  // Move one player without broadcasting (used by the tick)
+  private def movePlayer(playerId: String, dx: Int, dy: Int): IO[Unit] =
     for
       ps <- playersRef.get
       _  <- ps.get(playerId).traverse_ { p =>
@@ -129,22 +129,18 @@ class GameState(
                   bonus    = if ateFood then FOOD_POINTS else 0
                   moved    = p.copy(x = nx, y = ny, points = p.points + 1 + bonus)
                   _       <- playersRef.update(_.updated(playerId, moved))
-                  _       <- eatFood(food, nx, ny, ateFood)
-                  _       <- wanderOneFood()
-                  _       <- broadcastCurrent()
+                  _       <- if ateFood then eatFood(food, nx, ny) else IO.unit
                 yield ()
             }
     yield ()
 
-  private def eatFood(food: Set[(Int, Int)], nx: Int, ny: Int, ate: Boolean): IO[Unit] =
-    if !ate then IO.unit
-    else
-      for
-        ps2       <- playersRef.get
-        newFood    = food - ((nx, ny))
-        respawned  = spawnOne(ps2, newFood)
-        _         <- foodRef.set(respawned.fold(newFood)(newFood + _))
-      yield ()
+  private def eatFood(food: Set[(Int, Int)], nx: Int, ny: Int): IO[Unit] =
+    for
+      ps2       <- playersRef.get
+      newFood    = food - ((nx, ny))
+      respawned  = spawnOne(ps2, newFood)
+      _         <- foodRef.set(respawned.fold(newFood)(newFood + _))
+    yield ()
 
   private def wanderOneFood(): IO[Unit] =
     for
@@ -156,9 +152,24 @@ class GameState(
                 val picked  = pellets(Random.nextInt(pellets.size))
                 val without = food - picked
                 spawnOne(ps, without) match
-                  case None        => IO.unit
+                  case None         => IO.unit
                   case Some(newPos) => foodRef.set(without + newPos)
     yield ()
+
+  // One game tick: move every online player randomly + wander food + broadcast
+  def tick(): IO[Unit] =
+    for
+      ps <- playersRef.get
+      _  <- ps.values.toList.filter(_.online).traverse_ { p =>
+              val (dx, dy) = DIRS(Random.nextInt(DIRS.size))
+              movePlayer(p.id, dx, dy)
+            }
+      _  <- wanderOneFood()
+      _  <- broadcastCurrent()
+    yield ()
+
+  def startTickLoop(): IO[Nothing] =
+    (IO.sleep(1.second) *> tick()).foreverM
 
 object GameState:
   def make: IO[GameState] =

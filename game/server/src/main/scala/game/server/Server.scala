@@ -19,6 +19,7 @@ object Server extends IOApp:
     for
       state <- GameState.make
       _ <- IO.println(s"Starting Scala WebSocket server on port $port")
+      _ <- state.startTickLoop().start
       _ <- EmberServerBuilder.default[IO]
         .withHost(ipv4"0.0.0.0")
         .withPort(Port.fromInt(port).get)
