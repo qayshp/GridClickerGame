@@ -54,3 +54,4 @@ game/project/project/
 game/.bsp/
 *.class
 *.jar
+game/client/target/
