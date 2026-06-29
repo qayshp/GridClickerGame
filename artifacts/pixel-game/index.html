@@ -34,6 +34,11 @@
       color: #7b8ff5;
       text-transform: uppercase;
     }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     #status {
       font-size: clamp(10px, 2.5vw, 12px);
       color: #55cc88;
@@ -43,6 +48,19 @@
       border: 1px solid #1a3a1a;
       white-space: nowrap;
     }
+    #logout-btn {
+      display: none;
+      font-size: clamp(10px, 2.5vw, 11px);
+      font-family: 'Courier New', monospace;
+      color: #888;
+      background: transparent;
+      border: 1px solid #333;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #logout-btn:hover { color: #ccc; border-color: #666; }
     #canvas-wrap {
       border: 2px solid #1e1e3a;
       box-shadow: 0 0 40px rgba(100, 100, 255, 0.08);
@@ -63,7 +81,10 @@
 <body>
   <header>
     <h1>Pixel Grid</h1>
-    <div id="status">Connecting…</div>
+    <div class="header-right">
+      <div id="status">Checking login…</div>
+      <button id="logout-btn" onclick="location.href='/api/logout'">Log out</button>
+    </div>
   </header>
   <div id="canvas-wrap">
     <canvas id="gameCanvas"></canvas>

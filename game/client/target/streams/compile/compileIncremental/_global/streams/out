@@ -22,10 +22,10 @@
 [debug] compilation cycle 1
 [info] compiling 1 Scala source to /home/runner/workspace/game/client/target/scala-3.3.4/classes ...
 [debug] Returning already retrieved and compiled bridge: /home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-sbt-bridge/3.3.4/scala3-sbt-bridge-3.3.4.jar.
-[debug] [zinc] Running cached compiler 8c39a36 for Scala Compiler version 3.3.4
+[debug] [zinc] Running cached compiler 29382dcb for Scala Compiler version 3.3.4
 [debug] [zinc] The Scala compiler is invoked with:
 [debug] 	-scalajs
 [debug] 	-classpath
 [debug] 	/home/runner/workspace/game/client/target/scala-3.3.4/classes:/home/runner/workspace/game/shared/.js/target/scala-3.3.4/classes:/home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_sjs1_3/3.3.4/scala3-library_sjs1_3-3.3.4.jar:/home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-js/scalajs-library_2.13/1.18.2/scalajs-library_2.13-1.18.2.jar:/home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-js/scalajs-dom_sjs1_3/2.8.0/scalajs-dom_sjs1_3-2.8.0.jar:/home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/upickle_sjs1_3/3.3.1/upickle_sjs1_3-3.3.1.jar:/home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar:/home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-js/scalajs-javalib/1.18.2/scalajs-javalib-1.18.2.jar:/home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-js/scalajs-scalalib_2.13/2.13.16%2B1.18.2/scalajs-scalalib_2.13-2.13.16%2B1.18.2.jar:/home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/ujson_sjs1_3/3.3.1/ujson_sjs1_3-3.3.1.jar:/home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/upack_sjs1_3/3.3.1/upack_sjs1_3-3.3.1.jar:/home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/upickle-implicits_sjs1_3/3.3.1/upickle-implicits_sjs1_3-3.3.1.jar:/home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/upickle-core_sjs1_3/3.3.1/upickle-core_sjs1_3-3.3.1.jar:/home/runner/workspace/.cache/coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/geny_sjs1_3/1.1.0/geny_sjs1_3-1.1.0.jar
-[debug] Scala compilation took 7.765428751 s
+[debug] Scala compilation took 7.694877849 s
 [info] done compiling
