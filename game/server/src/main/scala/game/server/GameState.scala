@@ -130,6 +130,7 @@ class GameState(
                   moved    = p.copy(x = nx, y = ny, points = p.points + 1 + bonus)
                   _       <- playersRef.update(_.updated(playerId, moved))
                   _       <- eatFood(food, nx, ny, ateFood)
+                  _       <- wanderOneFood()
                   _       <- broadcastCurrent()
                 yield ()
             }
@@ -144,6 +145,20 @@ class GameState(
         respawned  = spawnOne(ps2, newFood)
         _         <- foodRef.set(respawned.fold(newFood)(newFood + _))
       yield ()
+
+  private def wanderOneFood(): IO[Unit] =
+    for
+      food <- foodRef.get
+      ps   <- playersRef.get
+      _    <- if food.isEmpty then IO.unit
+              else
+                val pellets = food.toVector
+                val picked  = pellets(Random.nextInt(pellets.size))
+                val without = food - picked
+                spawnOne(ps, without) match
+                  case None        => IO.unit
+                  case Some(newPos) => foodRef.set(without + newPos)
+    yield ()
 
 object GameState:
   def make: IO[GameState] =
