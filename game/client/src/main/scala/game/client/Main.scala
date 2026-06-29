@@ -20,7 +20,7 @@ object Main:
   var connected = false
 
   def computeCell(): Int =
-    val availW = dom.window.innerWidth.toInt - 4   // 2px border each side
+    val availW = dom.window.innerWidth.toInt - 4
     val availH = (dom.window.innerHeight * 0.82).toInt
     val c = Math.min(availW / GRID_W, availH / GRID_H)
     Math.max(MIN_CELL, Math.min(MAX_CELL, c))
@@ -30,7 +30,7 @@ object Main:
 
   def init(): Unit =
     val canvas = dom.document.getElementById("gameCanvas").asInstanceOf[Canvas]
-    val ctx = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
+    val ctx    = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
     val status = dom.document.getElementById("status")
 
     def resize(): Unit =
@@ -40,9 +40,42 @@ object Main:
       renderFrame(ctx, canvas)
 
     resize()
-
     dom.window.addEventListener("resize", (_: Event) => resize())
 
+    renderFrame(ctx, canvas)
+    status.textContent = "Checking login…"
+
+    val xhr = new dom.XMLHttpRequest()
+    xhr.open("GET", "/api/auth/user")
+    xhr.withCredentials = true
+    xhr.onload = (_: dom.Event) =>
+      if xhr.status == 200 then
+        val data = js.JSON.parse(xhr.responseText).asInstanceOf[js.Dynamic]
+        val user = data.user
+        if user == null || js.isUndefined(user) then
+          dom.window.location.href = "/api/login?returnTo=/"
+        else
+          val firstName = user.firstName.asInstanceOf[js.UndefOr[String]].getOrElse("")
+          val name = firstName.trim match
+            case "" => "Player"
+            case n  => n
+          val logoutBtn = dom.document.getElementById("logout-btn")
+          if logoutBtn != null then
+            logoutBtn.asInstanceOf[html.Button].style.display = "inline-block"
+          connectGame(name, canvas, ctx, status, resize)
+      else
+        dom.window.location.href = "/api/login?returnTo=/"
+    xhr.onerror = (_: dom.Event) =>
+      dom.window.location.href = "/api/login?returnTo=/"
+    xhr.send()
+
+  def connectGame(
+    playerName: String,
+    canvas: Canvas,
+    ctx: CanvasRenderingContext2D,
+    status: dom.Element,
+    resize: () => Unit
+  ): Unit =
     val proto = if dom.window.location.protocol == "https:" then "wss:" else "ws:"
     val wsUrl = s"${proto}//${dom.window.location.host}/ws"
 
@@ -50,12 +83,9 @@ object Main:
 
     ws.onopen = (_: Event) =>
       connected = true
-      status.textContent = "Connected! Enter your name:"
-      val raw = dom.window.prompt("Enter your name:", "")
-      val name = if raw == null || raw.trim.isEmpty then "Player" else raw.trim
       myId = s"p-${(js.Math.random() * 0xFFFFFFF).toInt.toHexString}"
-      send(ClientMsg.Join(name, myId))
-      status.textContent = s"Playing as: $name"
+      send(ClientMsg.Join(playerName, myId))
+      status.textContent = s"Playing as: $playerName"
 
     ws.onmessage = (e: MessageEvent) =>
       val state = read[ServerState](e.data.toString)
@@ -78,8 +108,6 @@ object Main:
           case "ArrowRight" | "d" | "D" => e.preventDefault(); send(ClientMsg.Move(1, 0))
           case _ => ()
     )
-
-    renderFrame(ctx, canvas)
 
   def send(msg: ClientMsg): Unit =
     if ws != null && ws.readyState == WebSocket.OPEN then

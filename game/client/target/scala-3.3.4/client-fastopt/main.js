@@ -1157,87 +1157,112 @@ $c_Lgame_client_Main$.prototype.init__V = (function() {
   window.addEventListener("resize", ((_$2) => {
     $p_Lgame_client_Main$__resize$1__Lorg_scalajs_dom_HTMLCanvasElement__Lorg_scalajs_dom_CanvasRenderingContext2D__V(this, canvas, ctx);
   }));
-  var proto = (($as_T(window.location.protocol) === "https:") ? "wss:" : "ws:");
-  var wsUrl = (((proto + "//") + $as_T(window.location.host)) + "/ws");
-  this.Lgame_client_Main$__f_ws = new WebSocket(wsUrl);
-  this.Lgame_client_Main$__f_ws.onopen = ((_$3) => {
-    this.Lgame_client_Main$__f_connected = true;
-    status.textContent = "Connected! Enter your name:";
-    var raw = $as_T(window.prompt("Enter your name:", ""));
-    if ((raw === null)) {
-      var $x_1 = true;
-    } else {
-      var this$3 = $n($f_T__trim__T($n(raw)));
-      var $x_1 = (this$3 === "");
-    }
-    if ($x_1) {
-      var name = "Player";
-    } else {
-      var name = $f_T__trim__T($n(raw));
-    }
-    var x = $doubleToInt((2.68435455E8 * $uD(Math.random())));
-    this.Lgame_client_Main$__f_myId = ("p-" + $as_T($uD((x >>> 0.0)).toString(16)));
-    var clientId = this.Lgame_client_Main$__f_myId;
-    this.send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Join(name, clientId));
-    status.textContent = ("Playing as: " + name);
-  });
-  this.Lgame_client_Main$__f_ws.onmessage = ((e) => {
-    var this$10 = $m_Lupickle_default$();
-    var s = $dp_toString__T($n(e.data));
-    var s$1 = new $c_Lujson_Readable$fromTransformer(s, $m_Lujson_StringParser$());
-    $m_Lupickle_default$();
-    var trace = false;
-    var evidence$3 = $m_Lgame_shared_ServerState$().derived$ReadWriter__Lupickle_core_Types$ReadWriter();
-    var state = $as_Lgame_shared_ServerState($f_Lupickle_Api__read__Lujson_Readable__Z__Lupickle_core_Types$Reader__O(this$10, s$1, trace, evidence$3));
-    this.Lgame_client_Main$__f_players = $n(state).Lgame_shared_ServerState__f_players;
-    this.renderFrame__Lorg_scalajs_dom_CanvasRenderingContext2D__Lorg_scalajs_dom_HTMLCanvasElement__V(ctx, canvas);
-  });
-  this.Lgame_client_Main$__f_ws.onclose = ((_$4) => {
-    this.Lgame_client_Main$__f_connected = false;
-    status.textContent = "Disconnected. Refresh to reconnect.";
-  });
-  this.Lgame_client_Main$__f_ws.onerror = ((_$5) => {
-    status.textContent = "Connection error.";
-  });
-  document.addEventListener("keydown", ((e$2) => {
-    if ($m_Lgame_client_Main$().Lgame_client_Main$__f_connected) {
-      var x1 = $as_T(e$2.key);
-      switch (x1) {
-        case "ArrowUp":
-        case "w":
-        case "W": {
-          e$2.preventDefault();
-          $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move(0, (-1)));
-          break;
-        }
-        case "ArrowDown":
-        case "s":
-        case "S": {
-          e$2.preventDefault();
-          $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move(0, 1));
-          break;
-        }
-        case "ArrowLeft":
-        case "a":
-        case "A": {
-          e$2.preventDefault();
-          $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move((-1), 0));
-          break;
-        }
-        case "ArrowRight":
-        case "d":
-        case "D": {
-          e$2.preventDefault();
-          $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move(1, 0));
-          break;
-        }
-      }
-      return (void 0);
-    } else {
-      return (void 0);
-    }
-  }));
   this.renderFrame__Lorg_scalajs_dom_CanvasRenderingContext2D__Lorg_scalajs_dom_HTMLCanvasElement__V(ctx, canvas);
+  status.textContent = "Checking login\u2026";
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "/api/auth/user");
+  xhr.withCredentials = true;
+  xhr.onload = ((_$3) => {
+    if (($uI(xhr.status) === 200)) {
+      var data = JSON.parse($as_T(xhr.responseText));
+      var user = data.user;
+      if (((user === null) || (user === (void 0)))) {
+        window.location.href = "/api/login?returnTo=/";
+        return (void 0);
+      } else {
+        var x = user.firstName;
+        var firstName = $as_T(((x === (void 0)) ? "" : x));
+        matchResult1: {
+          var name;
+          var x1 = $f_T__trim__T($n(firstName));
+          if ((x1 === "")) {
+            var name = "Player";
+            break matchResult1;
+          }
+          var name = x1;
+        }
+        var logoutBtn = document.getElementById("logout-btn");
+        if ((logoutBtn !== null)) {
+          logoutBtn.style.display = "inline-block";
+        }
+        var proto = (($as_T(window.location.protocol) === "https:") ? "wss:" : "ws:");
+        var wsUrl = (((proto + "//") + $as_T(window.location.host)) + "/ws");
+        this.Lgame_client_Main$__f_ws = new WebSocket(wsUrl);
+        this.Lgame_client_Main$__f_ws.onopen = ((_$5) => {
+          this.Lgame_client_Main$__f_connected = true;
+          var x$1 = $doubleToInt((2.68435455E8 * $uD(Math.random())));
+          this.Lgame_client_Main$__f_myId = ("p-" + $as_T($uD((x$1 >>> 0.0)).toString(16)));
+          var clientId = this.Lgame_client_Main$__f_myId;
+          this.send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Join(name, clientId));
+          status.textContent = ("Playing as: " + name);
+        });
+        this.Lgame_client_Main$__f_ws.onmessage = ((e) => {
+          var this$15 = $m_Lupickle_default$();
+          var s = $dp_toString__T($n(e.data));
+          var s$1 = new $c_Lujson_Readable$fromTransformer(s, $m_Lujson_StringParser$());
+          $m_Lupickle_default$();
+          var trace = false;
+          var evidence$3 = $m_Lgame_shared_ServerState$().derived$ReadWriter__Lupickle_core_Types$ReadWriter();
+          var state = $as_Lgame_shared_ServerState($f_Lupickle_Api__read__Lujson_Readable__Z__Lupickle_core_Types$Reader__O(this$15, s$1, trace, evidence$3));
+          this.Lgame_client_Main$__f_players = $n(state).Lgame_shared_ServerState__f_players;
+          this.renderFrame__Lorg_scalajs_dom_CanvasRenderingContext2D__Lorg_scalajs_dom_HTMLCanvasElement__V(ctx, canvas);
+        });
+        this.Lgame_client_Main$__f_ws.onclose = ((_$6) => {
+          this.Lgame_client_Main$__f_connected = false;
+          status.textContent = "Disconnected. Refresh to reconnect.";
+        });
+        this.Lgame_client_Main$__f_ws.onerror = ((_$7) => {
+          status.textContent = "Connection error.";
+        });
+        document.addEventListener("keydown", ((e$2) => {
+          if ($m_Lgame_client_Main$().Lgame_client_Main$__f_connected) {
+            var x2 = $as_T(e$2.key);
+            switch (x2) {
+              case "ArrowUp":
+              case "w":
+              case "W": {
+                e$2.preventDefault();
+                $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move(0, (-1)));
+                break;
+              }
+              case "ArrowDown":
+              case "s":
+              case "S": {
+                e$2.preventDefault();
+                $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move(0, 1));
+                break;
+              }
+              case "ArrowLeft":
+              case "a":
+              case "A": {
+                e$2.preventDefault();
+                $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move((-1), 0));
+                break;
+              }
+              case "ArrowRight":
+              case "d":
+              case "D": {
+                e$2.preventDefault();
+                $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move(1, 0));
+                break;
+              }
+            }
+            return (void 0);
+          } else {
+            return (void 0);
+          }
+        }));
+        return (void 0);
+      }
+    } else {
+      window.location.href = "/api/login?returnTo=/";
+      return (void 0);
+    }
+  });
+  xhr.onerror = ((_$4) => {
+    window.location.href = "/api/login?returnTo=/";
+  });
+  xhr.send();
 });
 $c_Lgame_client_Main$.prototype.send__Lgame_shared_ClientMsg__V = (function(msg) {
   if (((this.Lgame_client_Main$__f_ws !== null) && ($uI(this.Lgame_client_Main$__f_ws.readyState) === $uI(WebSocket.OPEN)))) {
@@ -1305,11 +1330,11 @@ $c_Lgame_client_Main$.prototype.renderFrame__Lorg_scalajs_dom_CanvasRenderingCon
   var this$22 = new $c_sc_MapOps$WithFilter(this$21, p$1);
   var f = new $c_sjsr_AnonFunction1(((x$1$2$1) => {
     var x$1$3 = $as_T2(x$1$2$1);
-    matchResult3: {
+    matchResult4: {
       if ((x$1$3 !== null)) {
         var p$2 = $as_Lgame_shared_Player($n(x$1$3).T2__f__2);
         $m_Lgame_client_Main$().drawPlayer__Lorg_scalajs_dom_CanvasRenderingContext2D__Lgame_shared_Player__Z__I__V(ctx, p$2, ($n(p$2).Lgame_shared_Player__f_id === $m_Lgame_client_Main$().Lgame_client_Main$__f_myId), c);
-        break matchResult3;
+        break matchResult4;
       }
       throw new $c_s_MatchError(x$1$3);
     }
