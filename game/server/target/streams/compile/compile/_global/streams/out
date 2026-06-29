@@ -1,0 +1,7 @@
+[error] -- Error: /home/runner/workspace/game/server/src/main/scala/game/server/GameState.scala:135:49 
+[error] 135 |                                                 else IO.unit
+[error]     |                                                 ^
+[error]     |The start of this line does not match any of the previous indentation widths.
+[error]     |Indentation width of current line : 49 spaces
+[error]     |This falls between previous widths: 38 spaces and 51 spaces
+[error] one error found

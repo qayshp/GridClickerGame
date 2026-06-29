@@ -15,6 +15,7 @@ object Main:
 
   var cell: Int = MAX_CELL
   var players: Map[String, Player] = Map.empty
+  var food: List[FoodPos] = Nil
   var myId: String = ""
   var ws: WebSocket = null
   var connected = false
@@ -90,6 +91,7 @@ object Main:
     ws.onmessage = (e: MessageEvent) =>
       val state = read[ServerState](e.data.toString)
       players = state.players
+      food    = state.food
       players.get(myId).foreach { me =>
         status.textContent = s"Playing as: $playerName  •  ${me.points} pts"
       }
@@ -137,8 +139,26 @@ object Main:
       ctx.lineTo(w, y * c)
       ctx.stroke()
 
+    for f <- food do
+      drawFood(ctx, f, c)
+
     for (_, p) <- players do
       drawPlayer(ctx, p, p.id == myId, c)
+
+  def drawFood(ctx: CanvasRenderingContext2D, f: FoodPos, c: Int): Unit =
+    val fx   = f.x * c
+    val fy   = f.y * c
+    val size = (c / 3).max(4)
+    val off  = (c - size) / 2
+    ctx.save()
+    ctx.shadowColor = "#ffe84d"
+    ctx.shadowBlur  = 12
+    ctx.fillStyle   = "#ffe84d"
+    ctx.fillRect(fx + off, fy + off, size, size)
+    val dot = (size / 3).max(1)
+    ctx.fillStyle = "#fff9c4"
+    ctx.fillRect(fx + off + dot, fy + off + dot, dot, dot)
+    ctx.restore()
 
   def drawPlayer(ctx: CanvasRenderingContext2D, p: Player, isMe: Boolean, c: Int): Unit =
     val px = p.x * c
