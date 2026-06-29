@@ -8,7 +8,8 @@ case class Player(
   y: Int,
   color: String,
   name: String,
-  online: Boolean
+  online: Boolean,
+  points: Int
 ) derives ReadWriter
 
 sealed trait ClientMsg derives ReadWriter

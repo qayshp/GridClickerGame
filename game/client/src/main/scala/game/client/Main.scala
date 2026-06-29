@@ -86,11 +86,13 @@ object Main:
       myId = if userId.nonEmpty then userId
              else s"p-${(js.Math.random() * 0xFFFFFFF).toInt.toHexString}"
       send(ClientMsg.Join(playerName, myId, userId))
-      status.textContent = s"Playing as: $playerName"
 
     ws.onmessage = (e: MessageEvent) =>
       val state = read[ServerState](e.data.toString)
       players = state.players
+      players.get(myId).foreach { me =>
+        status.textContent = s"Playing as: $playerName  •  ${me.points} pts"
+      }
       renderFrame(ctx, canvas)
 
     ws.onclose = (_: Event) =>
@@ -161,7 +163,6 @@ object Main:
       ctx.fillRect(px + c*2/5, py + c/7, (c/9).max(2), (c/9).max(2))
       ctx.fillRect(px + c - c*2/5 - (c/9).max(2), py + c/7, (c/9).max(2), (c/9).max(2))
     else
-      // Closed eyes for offline players
       ctx.fillStyle = "#888899"
       ctx.fillRect(px + c*2/5, py + c/7 + (c/9).max(2)/2, (c/9).max(2), 1)
       ctx.fillRect(px + c - c*2/5 - (c/9).max(2), py + c/7 + (c/9).max(2)/2, (c/9).max(2), 1)
@@ -178,7 +179,11 @@ object Main:
       val fontSize = Math.max(7, c / 4)
       ctx.font = s"bold ${fontSize}px monospace"
       ctx.textAlign = "center"
-      val label = if p.online then p.name else s"${p.name} (away)"
-      ctx.fillText(label, px + c / 2, py + c + fontSize)
+      val nameLine = if p.online then p.name else s"${p.name} (away)"
+      ctx.fillText(nameLine, px + c / 2, py + c + fontSize)
+      val ptsLine = s"${p.points} pts"
+      ctx.font = s"${(fontSize * 0.85).toInt}px monospace"
+      ctx.fillStyle = if isMe then "#aaffaa" else if p.online then "#7777aa" else "#555577"
+      ctx.fillText(ptsLine, px + c / 2, py + c + fontSize * 2)
 
     ctx.restore()
