@@ -1099,19 +1099,29 @@ var $d_D = new $TypeData().initPrim(0.0, "D", "double", $ac_D, Float64Array);
 function $s_Lgame_client_Main__main__AT__V(args) {
   $m_Lgame_client_Main$().main__AT__V(args);
 }
+function $p_Lgame_client_Main$__resize$1__Lorg_scalajs_dom_HTMLCanvasElement__Lorg_scalajs_dom_CanvasRenderingContext2D__V($thiz, canvas$1, ctx$1) {
+  $thiz.Lgame_client_Main$__f_cell = $thiz.computeCell__I();
+  canvas$1.width = Math.imul($thiz.Lgame_client_Main$__f_cell, $thiz.Lgame_client_Main$__f_GRID_W);
+  canvas$1.height = Math.imul($thiz.Lgame_client_Main$__f_cell, $thiz.Lgame_client_Main$__f_GRID_H);
+  $thiz.renderFrame__Lorg_scalajs_dom_CanvasRenderingContext2D__Lorg_scalajs_dom_HTMLCanvasElement__V(ctx$1, canvas$1);
+}
 /** @constructor */
 function $c_Lgame_client_Main$() {
-  this.Lgame_client_Main$__f_CELL = 0;
   this.Lgame_client_Main$__f_GRID_W = 0;
   this.Lgame_client_Main$__f_GRID_H = 0;
+  this.Lgame_client_Main$__f_MAX_CELL = 0;
+  this.Lgame_client_Main$__f_MIN_CELL = 0;
+  this.Lgame_client_Main$__f_cell = 0;
   this.Lgame_client_Main$__f_players = null;
   this.Lgame_client_Main$__f_myId = null;
   this.Lgame_client_Main$__f_ws = null;
   this.Lgame_client_Main$__f_connected = false;
   $n_Lgame_client_Main$ = this;
-  this.Lgame_client_Main$__f_CELL = 28;
   this.Lgame_client_Main$__f_GRID_W = 30;
   this.Lgame_client_Main$__f_GRID_H = 20;
+  this.Lgame_client_Main$__f_MAX_CELL = 28;
+  this.Lgame_client_Main$__f_MIN_CELL = 8;
+  this.Lgame_client_Main$__f_cell = this.Lgame_client_Main$__f_MAX_CELL;
   this.Lgame_client_Main$__f_players = $m_sci_Map$EmptyMap$();
   this.Lgame_client_Main$__f_myId = "";
   this.Lgame_client_Main$__f_ws = null;
@@ -1123,6 +1133,17 @@ $c_Lgame_client_Main$.prototype.constructor = $c_Lgame_client_Main$;
 function $h_Lgame_client_Main$() {
 }
 $h_Lgame_client_Main$.prototype = $c_Lgame_client_Main$.prototype;
+$c_Lgame_client_Main$.prototype.computeCell__I = (function() {
+  var availW = (((-4) + $doubleToInt($uD(window.innerWidth))) | 0);
+  var availH = $doubleToInt((0.82 * $uD(window.innerHeight)));
+  var a = $intDiv(availW, this.Lgame_client_Main$__f_GRID_W);
+  var b = $intDiv(availH, this.Lgame_client_Main$__f_GRID_H);
+  var c = ((a < b) ? a : b);
+  var a$2 = this.Lgame_client_Main$__f_MIN_CELL;
+  var a$1 = this.Lgame_client_Main$__f_MAX_CELL;
+  var b$1 = ((a$1 < c) ? a$1 : c);
+  return ((a$2 > b$1) ? a$2 : b$1);
+});
 $c_Lgame_client_Main$.prototype.main__AT__V = (function(args) {
   document.addEventListener("DOMContentLoaded", ((_$1) => {
     $m_Lgame_client_Main$().init__V();
@@ -1130,22 +1151,24 @@ $c_Lgame_client_Main$.prototype.main__AT__V = (function(args) {
 });
 $c_Lgame_client_Main$.prototype.init__V = (function() {
   var canvas = document.getElementById("gameCanvas");
-  canvas.width = Math.imul(this.Lgame_client_Main$__f_CELL, this.Lgame_client_Main$__f_GRID_W);
-  canvas.height = Math.imul(this.Lgame_client_Main$__f_CELL, this.Lgame_client_Main$__f_GRID_H);
   var ctx = canvas.getContext("2d");
   var status = document.getElementById("status");
+  $p_Lgame_client_Main$__resize$1__Lorg_scalajs_dom_HTMLCanvasElement__Lorg_scalajs_dom_CanvasRenderingContext2D__V(this, canvas, ctx);
+  window.addEventListener("resize", ((_$2) => {
+    $p_Lgame_client_Main$__resize$1__Lorg_scalajs_dom_HTMLCanvasElement__Lorg_scalajs_dom_CanvasRenderingContext2D__V(this, canvas, ctx);
+  }));
   var proto = (($as_T(window.location.protocol) === "https:") ? "wss:" : "ws:");
   var wsUrl = (((proto + "//") + $as_T(window.location.host)) + "/ws");
   this.Lgame_client_Main$__f_ws = new WebSocket(wsUrl);
-  this.Lgame_client_Main$__f_ws.onopen = ((_$2) => {
+  this.Lgame_client_Main$__f_ws.onopen = ((_$3) => {
     this.Lgame_client_Main$__f_connected = true;
     status.textContent = "Connected! Enter your name:";
     var raw = $as_T(window.prompt("Enter your name:", ""));
     if ((raw === null)) {
       var $x_1 = true;
     } else {
-      var this$2 = $n($f_T__trim__T($n(raw)));
-      var $x_1 = (this$2 === "");
+      var this$3 = $n($f_T__trim__T($n(raw)));
+      var $x_1 = (this$3 === "");
     }
     if ($x_1) {
       var name = "Player";
@@ -1159,21 +1182,21 @@ $c_Lgame_client_Main$.prototype.init__V = (function() {
     status.textContent = ("Playing as: " + name);
   });
   this.Lgame_client_Main$__f_ws.onmessage = ((e) => {
-    var this$9 = $m_Lupickle_default$();
+    var this$10 = $m_Lupickle_default$();
     var s = $dp_toString__T($n(e.data));
     var s$1 = new $c_Lujson_Readable$fromTransformer(s, $m_Lujson_StringParser$());
     $m_Lupickle_default$();
     var trace = false;
     var evidence$3 = $m_Lgame_shared_ServerState$().derived$ReadWriter__Lupickle_core_Types$ReadWriter();
-    var state = $as_Lgame_shared_ServerState($f_Lupickle_Api__read__Lujson_Readable__Z__Lupickle_core_Types$Reader__O(this$9, s$1, trace, evidence$3));
+    var state = $as_Lgame_shared_ServerState($f_Lupickle_Api__read__Lujson_Readable__Z__Lupickle_core_Types$Reader__O(this$10, s$1, trace, evidence$3));
     this.Lgame_client_Main$__f_players = $n(state).Lgame_shared_ServerState__f_players;
     this.renderFrame__Lorg_scalajs_dom_CanvasRenderingContext2D__Lorg_scalajs_dom_HTMLCanvasElement__V(ctx, canvas);
   });
-  this.Lgame_client_Main$__f_ws.onclose = ((_$3) => {
+  this.Lgame_client_Main$__f_ws.onclose = ((_$4) => {
     this.Lgame_client_Main$__f_connected = false;
     status.textContent = "Disconnected. Refresh to reconnect.";
   });
-  this.Lgame_client_Main$__f_ws.onerror = ((_$4) => {
+  this.Lgame_client_Main$__f_ws.onerror = ((_$5) => {
     status.textContent = "Connection error.";
   });
   document.addEventListener("keydown", ((e$2) => {
@@ -1233,6 +1256,7 @@ $c_Lgame_client_Main$.prototype.send__Lgame_shared_ClientMsg__V = (function(msg)
 $c_Lgame_client_Main$.prototype.renderFrame__Lorg_scalajs_dom_CanvasRenderingContext2D__Lorg_scalajs_dom_HTMLCanvasElement__V = (function(ctx, canvas) {
   var w = $uI(canvas.width);
   var h = $uI(canvas.height);
+  var c = this.Lgame_client_Main$__f_cell;
   ctx.fillStyle = "#0d0d1a";
   ctx.fillRect(0.0, 0.0, w, h);
   ctx.strokeStyle = "#1a1a36";
@@ -1244,9 +1268,9 @@ $c_Lgame_client_Main$.prototype.renderFrame__Lorg_scalajs_dom_CanvasRenderingCon
     while (true) {
       var arg1 = i;
       ctx.beginPath();
-      var x = Math.imul(arg1, $m_Lgame_client_Main$().Lgame_client_Main$__f_CELL);
+      var x = Math.imul(arg1, c);
       ctx.moveTo(x, 0.0);
-      var x$1 = Math.imul(arg1, $m_Lgame_client_Main$().Lgame_client_Main$__f_CELL);
+      var x$1 = Math.imul(arg1, c);
       ctx.lineTo(x$1, h);
       ctx.stroke();
       if ((i === end)) {
@@ -1262,9 +1286,9 @@ $c_Lgame_client_Main$.prototype.renderFrame__Lorg_scalajs_dom_CanvasRenderingCon
     while (true) {
       var arg1$1 = i$1;
       ctx.beginPath();
-      var x$2 = Math.imul(arg1$1, $m_Lgame_client_Main$().Lgame_client_Main$__f_CELL);
+      var x$2 = Math.imul(arg1$1, c);
       ctx.moveTo(0.0, x$2);
-      var x$3 = Math.imul(arg1$1, $m_Lgame_client_Main$().Lgame_client_Main$__f_CELL);
+      var x$3 = Math.imul(arg1$1, c);
       ctx.lineTo(w, x$3);
       ctx.stroke();
       if ((i$1 === end$1)) {
@@ -1284,7 +1308,7 @@ $c_Lgame_client_Main$.prototype.renderFrame__Lorg_scalajs_dom_CanvasRenderingCon
     matchResult3: {
       if ((x$1$3 !== null)) {
         var p$2 = $as_Lgame_shared_Player($n(x$1$3).T2__f__2);
-        $m_Lgame_client_Main$().drawPlayer__Lorg_scalajs_dom_CanvasRenderingContext2D__Lgame_shared_Player__Z__V(ctx, p$2, ($n(p$2).Lgame_shared_Player__f_id === $m_Lgame_client_Main$().Lgame_client_Main$__f_myId));
+        $m_Lgame_client_Main$().drawPlayer__Lorg_scalajs_dom_CanvasRenderingContext2D__Lgame_shared_Player__Z__I__V(ctx, p$2, ($n(p$2).Lgame_shared_Player__f_id === $m_Lgame_client_Main$().Lgame_client_Main$__f_myId), c);
         break matchResult3;
       }
       throw new $c_s_MatchError(x$1$3);
@@ -1292,58 +1316,64 @@ $c_Lgame_client_Main$.prototype.renderFrame__Lorg_scalajs_dom_CanvasRenderingCon
   }));
   $n(this$22.filtered__sc_Iterable()).foreach__F1__V(f);
 });
-$c_Lgame_client_Main$.prototype.drawPlayer__Lorg_scalajs_dom_CanvasRenderingContext2D__Lgame_shared_Player__Z__V = (function(ctx, p, isMe) {
-  var px = Math.imul($n(p).Lgame_shared_Player__f_x, this.Lgame_client_Main$__f_CELL);
-  var py = Math.imul($n(p).Lgame_shared_Player__f_y, this.Lgame_client_Main$__f_CELL);
-  var s = this.Lgame_client_Main$__f_CELL;
+$c_Lgame_client_Main$.prototype.drawPlayer__Lorg_scalajs_dom_CanvasRenderingContext2D__Lgame_shared_Player__Z__I__V = (function(ctx, p, isMe, c) {
+  var px = Math.imul($n(p).Lgame_shared_Player__f_x, c);
+  var py = Math.imul($n(p).Lgame_shared_Player__f_y, c);
   if (isMe) {
     ctx.shadowColor = $n(p).Lgame_shared_Player__f_color;
-    ctx.shadowBlur = 12.0;
+    ctx.shadowBlur = 10.0;
   } else {
     ctx.shadowBlur = 0.0;
   }
-  var s$1 = $n(p).Lgame_shared_Player__f_color;
-  ctx.fillStyle = s$1;
-  var x = ((5 + px) | 0);
-  var x$1 = ((10 + py) | 0);
-  var x$2 = (((-10) + s) | 0);
-  var x$3 = (((-12) + s) | 0);
+  var s = $n(p).Lgame_shared_Player__f_color;
+  ctx.fillStyle = s;
+  var x = ((px + ((c / 5) | 0)) | 0);
+  var x$1 = ((py + ((Math.imul(3, c) / 8) | 0)) | 0);
+  var x$2 = ((Math.imul(3, c) / 5) | 0);
+  var x$3 = (((-2) + ((Math.imul(5, c) / 8) | 0)) | 0);
   ctx.fillRect(x, x$1, x$2, x$3);
-  var x$4 = ((9 + px) | 0);
-  var x$5 = ((3 + py) | 0);
-  var x$6 = (((-18) + s) | 0);
-  ctx.fillRect(x$4, x$5, x$6, 9.0);
+  var x$4 = ((px + ((Math.imul(3, c) / 10) | 0)) | 0);
+  var x$5 = ((py + ((c / 10) | 0)) | 0);
+  var x$6 = (((c << 1) / 5) | 0);
+  var x$7 = ((Math.imul(3, c) / 8) | 0);
+  ctx.fillRect(x$4, x$5, x$6, x$7);
   ctx.fillStyle = "#ffffff";
-  var x$7 = ((11 + px) | 0);
-  var x$8 = ((5 + py) | 0);
-  ctx.fillRect(x$7, x$8, 3.0, 3.0);
-  var x$9 = (((-14) + ((px + s) | 0)) | 0);
-  var x$10 = ((5 + py) | 0);
-  ctx.fillRect(x$9, x$10, 3.0, 3.0);
-  ctx.fillStyle = "#000000";
-  var x$11 = ((12 + px) | 0);
-  var x$12 = ((6 + py) | 0);
-  ctx.fillRect(x$11, x$12, 1.0, 2.0);
-  var x$13 = (((-13) + ((px + s) | 0)) | 0);
-  var x$14 = ((6 + py) | 0);
-  ctx.fillRect(x$13, x$14, 1.0, 2.0);
+  var x$8 = ((px + (((c << 1) / 5) | 0)) | 0);
+  var x$9 = ((py + ((c / 7) | 0)) | 0);
+  var x$10 = ((c / 9) | 0);
+  var x$11 = ((x$10 > 2) ? x$10 : 2);
+  var x$12 = ((c / 9) | 0);
+  var x$13 = ((x$12 > 2) ? x$12 : 2);
+  ctx.fillRect(x$8, x$9, x$11, x$13);
+  var x$14 = ((c / 9) | 0);
+  var x$15 = ((((((px + c) | 0) - (((c << 1) / 5) | 0)) | 0) - ((x$14 > 2) ? x$14 : 2)) | 0);
+  var x$16 = ((py + ((c / 7) | 0)) | 0);
+  var x$17 = ((c / 9) | 0);
+  var x$18 = ((x$17 > 2) ? x$17 : 2);
+  var x$19 = ((c / 9) | 0);
+  var x$20 = ((x$19 > 2) ? x$19 : 2);
+  ctx.fillRect(x$15, x$16, x$18, x$20);
   if (isMe) {
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1.5;
-    var x$15 = ((2 + px) | 0);
-    var x$16 = ((2 + py) | 0);
-    var x$17 = (((-4) + s) | 0);
-    var x$18 = (((-4) + s) | 0);
-    ctx.strokeRect(x$15, x$16, x$17, x$18);
+    ctx.lineWidth = 1.0;
+    var x$21 = ((1 + px) | 0);
+    var x$22 = ((1 + py) | 0);
+    var x$23 = (((-2) + c) | 0);
+    var x$24 = (((-2) + c) | 0);
+    ctx.strokeRect(x$21, x$22, x$23, x$24);
   }
   ctx.shadowBlur = 0.0;
-  ctx.fillStyle = (isMe ? "#ffffff" : "#aaaacc");
-  ctx.font = "bold 9px monospace";
-  ctx.textAlign = "center";
-  var $x_1 = $n(p).Lgame_shared_Player__f_name;
-  var x$19 = ((px + ((s / 2) | 0)) | 0);
-  var x$20 = ((9 + ((py + s) | 0)) | 0);
-  ctx.fillText($x_1, x$19, x$20);
+  if ((c >= 14)) {
+    ctx.fillStyle = (isMe ? "#ffffff" : "#aaaacc");
+    var b = ((c / 4) | 0);
+    var fontSize = ((b < 7) ? 7 : b);
+    ctx.font = (("bold " + fontSize) + "px monospace");
+    ctx.textAlign = "center";
+    var $x_1 = $n(p).Lgame_shared_Player__f_name;
+    var x$25 = ((px + ((c / 2) | 0)) | 0);
+    var x$26 = ((((py + c) | 0) + fontSize) | 0);
+    ctx.fillText($x_1, x$25, x$26);
+  }
 });
 var $d_Lgame_client_Main$ = new $TypeData().initClass($c_Lgame_client_Main$, "game.client.Main$", ({
   Lgame_client_Main$: 1

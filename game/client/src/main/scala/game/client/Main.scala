@@ -8,25 +8,40 @@ import upickle.default.*
 import scala.scalajs.js
 
 object Main:
-  val CELL  = 28
   val GRID_W = 30
   val GRID_H = 20
+  val MAX_CELL = 28
+  val MIN_CELL = 8
 
+  var cell: Int = MAX_CELL
   var players: Map[String, Player] = Map.empty
   var myId: String = ""
   var ws: WebSocket = null
   var connected = false
+
+  def computeCell(): Int =
+    val availW = dom.window.innerWidth.toInt - 4   // 2px border each side
+    val availH = (dom.window.innerHeight * 0.82).toInt
+    val c = Math.min(availW / GRID_W, availH / GRID_H)
+    Math.max(MIN_CELL, Math.min(MAX_CELL, c))
 
   def main(args: Array[String]): Unit =
     dom.document.addEventListener("DOMContentLoaded", (_: Event) => init())
 
   def init(): Unit =
     val canvas = dom.document.getElementById("gameCanvas").asInstanceOf[Canvas]
-    canvas.width  = CELL * GRID_W
-    canvas.height = CELL * GRID_H
     val ctx = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
-
     val status = dom.document.getElementById("status")
+
+    def resize(): Unit =
+      cell = computeCell()
+      canvas.width  = cell * GRID_W
+      canvas.height = cell * GRID_H
+      renderFrame(ctx, canvas)
+
+    resize()
+
+    dom.window.addEventListener("resize", (_: Event) => resize())
 
     val proto = if dom.window.location.protocol == "https:" then "wss:" else "ws:"
     val wsUrl = s"${proto}//${dom.window.location.host}/ws"
@@ -73,6 +88,7 @@ object Main:
   def renderFrame(ctx: CanvasRenderingContext2D, canvas: Canvas): Unit =
     val w = canvas.width
     val h = canvas.height
+    val c = cell
 
     ctx.fillStyle = "#0d0d1a"
     ctx.fillRect(0, 0, w, h)
@@ -81,50 +97,46 @@ object Main:
     ctx.lineWidth = 1
     for x <- 0 to GRID_W do
       ctx.beginPath()
-      ctx.moveTo(x * CELL, 0)
-      ctx.lineTo(x * CELL, h)
+      ctx.moveTo(x * c, 0)
+      ctx.lineTo(x * c, h)
       ctx.stroke()
     for y <- 0 to GRID_H do
       ctx.beginPath()
-      ctx.moveTo(0, y * CELL)
-      ctx.lineTo(w, y * CELL)
+      ctx.moveTo(0, y * c)
+      ctx.lineTo(w, y * c)
       ctx.stroke()
 
     for (_, p) <- players do
-      drawPlayer(ctx, p, p.id == myId)
+      drawPlayer(ctx, p, p.id == myId, c)
 
-  def drawPlayer(ctx: CanvasRenderingContext2D, p: Player, isMe: Boolean): Unit =
-    val px = p.x * CELL
-    val py = p.y * CELL
-    val s  = CELL
+  def drawPlayer(ctx: CanvasRenderingContext2D, p: Player, isMe: Boolean, c: Int): Unit =
+    val px = p.x * c
+    val py = p.y * c
 
     if isMe then
       ctx.shadowColor = p.color
-      ctx.shadowBlur = 12
+      ctx.shadowBlur = 10
     else
       ctx.shadowBlur = 0
 
     ctx.fillStyle = p.color
-    ctx.fillRect(px + 5, py + 10, s - 10, s - 12)
-
-    ctx.fillRect(px + 9, py + 3, s - 18, 9)
+    ctx.fillRect(px + c/5, py + c*3/8, c*3/5, c*5/8 - 2)
+    ctx.fillRect(px + c*3/10, py + c/10, c*2/5, c*3/8)
 
     ctx.fillStyle = "#ffffff"
-    ctx.fillRect(px + 11, py + 5, 3, 3)
-    ctx.fillRect(px + s - 14, py + 5, 3, 3)
-
-    ctx.fillStyle = "#000000"
-    ctx.fillRect(px + 12, py + 6, 1, 2)
-    ctx.fillRect(px + s - 13, py + 6, 1, 2)
+    ctx.fillRect(px + c*2/5, py + c/7, (c/9).max(2), (c/9).max(2))
+    ctx.fillRect(px + c - c*2/5 - (c/9).max(2), py + c/7, (c/9).max(2), (c/9).max(2))
 
     if isMe then
       ctx.strokeStyle = "#ffffff"
-      ctx.lineWidth = 1.5
-      ctx.strokeRect(px + 2, py + 2, s - 4, s - 4)
+      ctx.lineWidth = 1.0
+      ctx.strokeRect(px + 1, py + 1, c - 2, c - 2)
 
     ctx.shadowBlur = 0
 
-    ctx.fillStyle = if isMe then "#ffffff" else "#aaaacc"
-    ctx.font = s"bold 9px monospace"
-    ctx.textAlign = "center"
-    ctx.fillText(p.name, px + s / 2, py + s + 9)
+    if c >= 14 then
+      ctx.fillStyle = if isMe then "#ffffff" else "#aaaacc"
+      val fontSize = Math.max(7, c / 4)
+      ctx.font = s"bold ${fontSize}px monospace"
+      ctx.textAlign = "center"
+      ctx.fillText(p.name, px + c / 2, py + c + fontSize)
