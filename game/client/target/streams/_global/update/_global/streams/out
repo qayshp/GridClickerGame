@@ -1,7 +1,0 @@
-[0m[[0m[0mdebug[0m] [0m[0mnot up to date. inChanged = true, force = false[0m
-[0m[[0m[0mdebug[0m] [0m[0mUpdating client...[0m
-[0m[[0m[0minfo[0m] [0m[0mUpdating client_sjs1_3[0m
-[0m[[0m[0minfo[0m] [0m[0mResolved client_sjs1_3 dependencies[0m
-[0m[[0m[0minfo[0m] [0m[0mFetching artifacts of client_sjs1_3[0m
-[0m[[0m[0minfo[0m] [0m[0mFetched artifacts of client_sjs1_3[0m
-[0m[[0m[0mdebug[0m] [0m[0mDone updating client[0m
