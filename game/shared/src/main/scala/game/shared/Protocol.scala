@@ -9,13 +9,15 @@ case class Player(
   color: String,
   name: String,
   online: Boolean,
-  points: Int
+  points: Int,
+  upgrades: Set[String]
 ) derives ReadWriter
 
 sealed trait ClientMsg derives ReadWriter
 object ClientMsg:
   case class Join(name: String, clientId: String, userId: String) extends ClientMsg derives ReadWriter
   case class Move(dx: Int, dy: Int) extends ClientMsg derives ReadWriter
+  case class BuyUpgrade(upgradeId: String) extends ClientMsg derives ReadWriter
 
 case class FoodPos(x: Int, y: Int) derives ReadWriter
 

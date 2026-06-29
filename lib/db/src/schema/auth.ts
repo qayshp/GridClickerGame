@@ -22,6 +22,7 @@ export const usersTable = pgTable("users", {
   gameX: integer("game_x").default(15),
   gameY: integer("game_y").default(10),
   points: integer("points").default(0),
+  upgrades: varchar("upgrades").default(""),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
