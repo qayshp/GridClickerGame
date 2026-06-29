@@ -51,6 +51,11 @@ object Main:
     renderFrame(ctx, canvas)
     status.textContent = "Checking login…"
 
+    def startGuest(): Unit =
+      val loginBtn = dom.document.getElementById("login-btn")
+      if loginBtn != null then loginBtn.asInstanceOf[html.Anchor].style.display = "inline-block"
+      connectGame("Guest", "", canvas, ctx, status)
+
     val xhr = new dom.XMLHttpRequest()
     xhr.open("GET", "/api/auth/user")
     xhr.withCredentials = true
@@ -59,7 +64,7 @@ object Main:
         val data = js.JSON.parse(xhr.responseText).asInstanceOf[js.Dynamic]
         val user = data.user
         if user == null || js.isUndefined(user) then
-          dom.window.location.href = "/api/login?returnTo=/"
+          startGuest()
         else
           val firstName = user.firstName.asInstanceOf[js.UndefOr[String]].getOrElse("")
           val userId    = user.id.asInstanceOf[js.UndefOr[String]].getOrElse("")
@@ -71,9 +76,8 @@ object Main:
             logoutBtn.asInstanceOf[html.Button].style.display = "inline-block"
           connectGame(name, userId, canvas, ctx, status)
       else
-        dom.window.location.href = "/api/login?returnTo=/"
-    xhr.onerror = (_: dom.Event) =>
-      dom.window.location.href = "/api/login?returnTo=/"
+        startGuest()
+    xhr.onerror = (_: dom.Event) => startGuest()
     xhr.send()
 
   def connectGame(
@@ -112,7 +116,10 @@ object Main:
         kickAnims(ctx, canvas)
 
       players.get(myId).foreach { me =>
-        status.textContent = s"Playing as: $playerName  •  ${me.points} pts"
+        val pts = s"${me.points} pts"
+        status.textContent =
+          if userId.isEmpty then s"Guest  •  $pts  •  login to save"
+          else s"Playing as: $playerName  •  $pts"
       }
       renderFrame(ctx, canvas)
 
