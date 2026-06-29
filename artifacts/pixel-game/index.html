@@ -48,19 +48,22 @@
       border: 1px solid #1a3a1a;
       white-space: nowrap;
     }
-    #logout-btn {
+    #logout-btn, #login-btn {
       display: none;
       font-size: clamp(10px, 2.5vw, 11px);
       font-family: 'Courier New', monospace;
-      color: #888;
       background: transparent;
       border: 1px solid #333;
       padding: 3px 8px;
       border-radius: 4px;
       cursor: pointer;
       white-space: nowrap;
+      text-decoration: none;
     }
+    #logout-btn { color: #888; }
     #logout-btn:hover { color: #ccc; border-color: #666; }
+    #login-btn  { color: #7b8ff5; border-color: #2a2a5a; }
+    #login-btn:hover { color: #aabbff; border-color: #4a4a8a; }
     #canvas-wrap {
       border: 2px solid #1e1e3a;
       box-shadow: 0 0 40px rgba(100, 100, 255, 0.08);
@@ -83,6 +86,7 @@
     <h1>Pixel Grid</h1>
     <div class="header-right">
       <div id="status">Checking login…</div>
+      <a id="login-btn" href="/api/login?returnTo=/">Log in</a>
       <button id="logout-btn" onclick="location.href='/api/logout'">Log out</button>
     </div>
   </header>
