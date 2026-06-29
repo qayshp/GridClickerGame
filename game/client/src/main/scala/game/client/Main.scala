@@ -41,7 +41,6 @@ object Main:
 
     resize()
     dom.window.addEventListener("resize", (_: Event) => resize())
-
     renderFrame(ctx, canvas)
     status.textContent = "Checking login…"
 
@@ -56,13 +55,14 @@ object Main:
           dom.window.location.href = "/api/login?returnTo=/"
         else
           val firstName = user.firstName.asInstanceOf[js.UndefOr[String]].getOrElse("")
+          val userId    = user.id.asInstanceOf[js.UndefOr[String]].getOrElse("")
           val name = firstName.trim match
             case "" => "Player"
             case n  => n
           val logoutBtn = dom.document.getElementById("logout-btn")
           if logoutBtn != null then
             logoutBtn.asInstanceOf[html.Button].style.display = "inline-block"
-          connectGame(name, canvas, ctx, status, resize)
+          connectGame(name, userId, canvas, ctx, status)
       else
         dom.window.location.href = "/api/login?returnTo=/"
     xhr.onerror = (_: dom.Event) =>
@@ -71,10 +71,10 @@ object Main:
 
   def connectGame(
     playerName: String,
+    userId: String,
     canvas: Canvas,
     ctx: CanvasRenderingContext2D,
-    status: dom.Element,
-    resize: () => Unit
+    status: dom.Element
   ): Unit =
     val proto = if dom.window.location.protocol == "https:" then "wss:" else "ws:"
     val wsUrl = s"${proto}//${dom.window.location.host}/ws"
@@ -83,8 +83,9 @@ object Main:
 
     ws.onopen = (_: Event) =>
       connected = true
-      myId = s"p-${(js.Math.random() * 0xFFFFFFF).toInt.toHexString}"
-      send(ClientMsg.Join(playerName, myId))
+      myId = if userId.nonEmpty then userId
+             else s"p-${(js.Math.random() * 0xFFFFFFF).toInt.toHexString}"
+      send(ClientMsg.Join(playerName, myId, userId))
       status.textContent = s"Playing as: $playerName"
 
     ws.onmessage = (e: MessageEvent) =>
@@ -141,21 +142,31 @@ object Main:
     val px = p.x * c
     val py = p.y * c
 
-    if isMe then
+    ctx.save()
+
+    if !p.online then ctx.globalAlpha = 0.35
+
+    if isMe && p.online then
       ctx.shadowColor = p.color
       ctx.shadowBlur = 10
     else
       ctx.shadowBlur = 0
 
-    ctx.fillStyle = p.color
+    ctx.fillStyle = if p.online then p.color else "#666688"
     ctx.fillRect(px + c/5, py + c*3/8, c*3/5, c*5/8 - 2)
     ctx.fillRect(px + c*3/10, py + c/10, c*2/5, c*3/8)
 
-    ctx.fillStyle = "#ffffff"
-    ctx.fillRect(px + c*2/5, py + c/7, (c/9).max(2), (c/9).max(2))
-    ctx.fillRect(px + c - c*2/5 - (c/9).max(2), py + c/7, (c/9).max(2), (c/9).max(2))
+    if p.online then
+      ctx.fillStyle = "#ffffff"
+      ctx.fillRect(px + c*2/5, py + c/7, (c/9).max(2), (c/9).max(2))
+      ctx.fillRect(px + c - c*2/5 - (c/9).max(2), py + c/7, (c/9).max(2), (c/9).max(2))
+    else
+      // Closed eyes for offline players
+      ctx.fillStyle = "#888899"
+      ctx.fillRect(px + c*2/5, py + c/7 + (c/9).max(2)/2, (c/9).max(2), 1)
+      ctx.fillRect(px + c - c*2/5 - (c/9).max(2), py + c/7 + (c/9).max(2)/2, (c/9).max(2), 1)
 
-    if isMe then
+    if isMe && p.online then
       ctx.strokeStyle = "#ffffff"
       ctx.lineWidth = 1.0
       ctx.strokeRect(px + 1, py + 1, c - 2, c - 2)
@@ -163,8 +174,11 @@ object Main:
     ctx.shadowBlur = 0
 
     if c >= 14 then
-      ctx.fillStyle = if isMe then "#ffffff" else "#aaaacc"
+      ctx.fillStyle = if isMe then "#ffffff" else if p.online then "#aaaacc" else "#666688"
       val fontSize = Math.max(7, c / 4)
       ctx.font = s"bold ${fontSize}px monospace"
       ctx.textAlign = "center"
-      ctx.fillText(p.name, px + c / 2, py + c + fontSize)
+      val label = if p.online then p.name else s"${p.name} (away)"
+      ctx.fillText(label, px + c / 2, py + c + fontSize)
+
+    ctx.restore()

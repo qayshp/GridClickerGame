@@ -7,12 +7,13 @@ case class Player(
   x: Int,
   y: Int,
   color: String,
-  name: String
+  name: String,
+  online: Boolean
 ) derives ReadWriter
 
 sealed trait ClientMsg derives ReadWriter
 object ClientMsg:
-  case class Join(name: String, clientId: String) extends ClientMsg derives ReadWriter
+  case class Join(name: String, clientId: String, userId: String) extends ClientMsg derives ReadWriter
   case class Move(dx: Int, dy: Int) extends ClientMsg derives ReadWriter
 
 case class ServerState(

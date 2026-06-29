@@ -4,7 +4,6 @@ import cats.effect.*
 import cats.effect.std.*
 import cats.syntax.all.*
 import fs2.*
-import fs2.concurrent.*
 import game.shared.*
 import upickle.default.*
 
@@ -18,16 +17,16 @@ val PLAYER_COLORS = Vector(
 )
 
 class GameState(
-  playersRef: Ref[IO, Map[String, Player]],
-  connsRef: Ref[IO, Map[String, Queue[IO, Option[String]]]],
+  playersRef:    Ref[IO, Map[String, Player]],
+  connsRef:      Ref[IO, Map[String, Queue[IO, Option[String]]]],
   connPlayerRef: Ref[IO, Map[String, String]],
-  colorIdxRef: Ref[IO, Int]
+  colorIdxRef:   Ref[IO, Int]
 ):
   private def broadcast(state: ServerState): IO[Unit] =
     val json = write(state)
     for
       conns <- connsRef.get
-      _ <- conns.values.toList.parTraverse_(_.offer(Some(json)))
+      _     <- conns.values.toList.parTraverse_(_.offer(Some(json)))
     yield ()
 
   def connect(connId: String): IO[Queue[IO, Option[String]]] =
@@ -39,58 +38,81 @@ class GameState(
   def disconnect(connId: String): IO[Unit] =
     for
       connPlayer <- connPlayerRef.get
-      playerId = connPlayer.get(connId)
-      conns <- connsRef.get
-      _ <- conns.get(connId).traverse_(_.offer(None))
-      _ <- connsRef.update(_ - connId)
-      _ <- connPlayerRef.update(_ - connId)
-      _ <- playerId.traverse_(pid => playersRef.update(_ - pid))
-      ps <- playersRef.get
-      _ <- broadcast(ServerState(ps, GRID_W, GRID_H))
+      pidOpt      = connPlayer.get(connId)
+      conns      <- connsRef.get
+      _          <- conns.get(connId).traverse_(_.offer(None))
+      _          <- connsRef.update(_ - connId)
+      _          <- connPlayerRef.update(_ - connId)
+      // Mark offline and save position rather than removing the player
+      _          <- pidOpt.traverse_ { pid =>
+                      for
+                        ps <- playersRef.get
+                        _  <- ps.get(pid).traverse_ { p =>
+                                val ghost = p.copy(online = false)
+                                playersRef.update(_.updated(pid, ghost)) *>
+                                GameApi.savePosition(pid, p.x, p.y)
+                              }
+                        ps2 <- playersRef.get
+                        _   <- broadcast(ServerState(ps2, GRID_W, GRID_H))
+                      yield ()
+                    }
     yield ()
 
   def handle(connId: String, msg: ClientMsg): IO[Unit] = msg match
-    case ClientMsg.Join(name, clientId) =>
-      val playerId = if clientId.nonEmpty then clientId else connId
+    case ClientMsg.Join(name, clientId, userId) =>
+      val playerId = if userId.nonEmpty then userId
+                     else if clientId.nonEmpty then clientId
+                     else connId
       for
-        idx <- colorIdxRef.getAndUpdate(i => (i + 1) % PLAYER_COLORS.size)
-        color = PLAYER_COLORS(idx)
-        safeName = name.take(12).trim match
-          case "" => "Player"
-          case n  => n
-        player = Player(playerId, GRID_W / 2, GRID_H / 2, color, safeName)
-        _ <- playersRef.update(_.updated(playerId, player))
-        _ <- connPlayerRef.update(_.updated(connId, playerId))
-        ps <- playersRef.get
-        _ <- broadcast(ServerState(ps, GRID_W, GRID_H))
+        _          <- connPlayerRef.update(_.updated(connId, playerId))
+        existing   <- playersRef.get.map(_.get(playerId))
+        player     <- existing match
+                        case Some(p) =>
+                          // Reconnect: restore ghost to online
+                          val back = p.copy(name = name, online = true)
+                          playersRef.update(_.updated(playerId, back)).as(back)
+                        case None =>
+                          for
+                            idx   <- colorIdxRef.getAndUpdate(i => (i + 1) % PLAYER_COLORS.size)
+                            color  = PLAYER_COLORS(idx)
+                            safeName = name.take(12).trim match
+                              case "" => "Player"
+                              case n  => n
+                            posPot <- GameApi.loadPosition(playerId)
+                            (sx, sy) = posPot.getOrElse((GRID_W / 2, GRID_H / 2))
+                            p      = Player(playerId, sx, sy, color, safeName, online = true)
+                            _      <- playersRef.update(_.updated(playerId, p))
+                          yield p
+        ps         <- playersRef.get
+        _          <- broadcast(ServerState(ps, GRID_W, GRID_H))
       yield ()
 
     case ClientMsg.Move(dx, dy) =>
       for
         connPlayer <- connPlayerRef.get
-        _ <- connPlayer.get(connId).traverse_ { playerId =>
-          for
-            ps <- playersRef.get
-            _ <- ps.get(playerId).traverse_ { p =>
-              val nx = (p.x + dx).max(0).min(GRID_W - 1)
-              val ny = (p.y + dy).max(0).min(GRID_H - 1)
-              if nx != p.x || ny != p.y then
-                for
-                  _ <- playersRef.update(_.updated(playerId, p.copy(x = nx, y = ny)))
-                  ps2 <- playersRef.get
-                  _ <- broadcast(ServerState(ps2, GRID_W, GRID_H))
-                yield ()
-              else IO.unit
-            }
-          yield ()
-        }
+        _          <- connPlayer.get(connId).traverse_ { playerId =>
+                        for
+                          ps <- playersRef.get
+                          _  <- ps.get(playerId).traverse_ { p =>
+                                  val nx = (p.x + dx).max(0).min(GRID_W - 1)
+                                  val ny = (p.y + dy).max(0).min(GRID_H - 1)
+                                  if nx != p.x || ny != p.y then
+                                    for
+                                      _ <- playersRef.update(_.updated(playerId, p.copy(x = nx, y = ny)))
+                                      ps2 <- playersRef.get
+                                      _ <- broadcast(ServerState(ps2, GRID_W, GRID_H))
+                                    yield ()
+                                  else IO.unit
+                                }
+                        yield ()
+                      }
       yield ()
 
 object GameState:
   def make: IO[GameState] =
     for
-      players <- Ref.of[IO, Map[String, Player]](Map.empty)
-      conns <- Ref.of[IO, Map[String, Queue[IO, Option[String]]]](Map.empty)
+      players    <- Ref.of[IO, Map[String, Player]](Map.empty)
+      conns      <- Ref.of[IO, Map[String, Queue[IO, Option[String]]]](Map.empty)
       connPlayer <- Ref.of[IO, Map[String, String]](Map.empty)
-      colorIdx <- Ref.of[IO, Int](0)
+      colorIdx   <- Ref.of[IO, Int](0)
     yield GameState(players, conns, connPlayer, colorIdx)

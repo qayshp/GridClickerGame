@@ -1,25 +1,25 @@
 [info] Fast optimizing /home/runner/workspace/game/client/target/scala-3.3.4/client-fastopt
-[debug] Linker: Compute reachability: 1125280 us
-[debug] Linker: Assemble LinkedClasses: 92159 us
-[debug] Linker: 1251945 us
+[debug] Linker: Compute reachability: 1300704 us
+[debug] Linker: Assemble LinkedClasses: 52881 us
+[debug] Linker: 1381424 us
 [debug] Optimizer: Batch mode: true
-[debug] Optimizer: Incremental part: 304083 us
-[debug] Optimizer: Elidable constructors: 5785 us
-[debug] Optimizer: Optimizing 8514 methods.
-[debug] Optimizer: Optimizer part: 2111135 us
-[debug] Optimizer: 2441139 us
-[debug] Refiner: Compute reachability: 184417 us
-[debug] Refiner: Assemble LinkedClasses: 11672 us
-[debug] Refiner: 198488 us
-[debug] Module Splitter: Calculate Dependency Info: 6244 us
-[debug] Module Splitter: Analyze Modules: 1244 us
-[debug] Module Splitter: Assemble Modules: 7653 us
-[debug] Module Splitter: 17994 us
-[debug] Emitter: Generate Classes: 1077066 us
-[debug] Emitter: Write trees: 55568 us
+[debug] Optimizer: Incremental part: 239258 us
+[debug] Optimizer: Elidable constructors: 6458 us
+[debug] Optimizer: Optimizing 8518 methods.
+[debug] Optimizer: Optimizer part: 2326074 us
+[debug] Optimizer: 2583166 us
+[debug] Refiner: Compute reachability: 203028 us
+[debug] Refiner: Assemble LinkedClasses: 30538 us
+[debug] Refiner: 241458 us
+[debug] Module Splitter: Calculate Dependency Info: 2024 us
+[debug] Module Splitter: Analyze Modules: 3285 us
+[debug] Module Splitter: Assemble Modules: 11588 us
+[debug] Module Splitter: 19696 us
+[debug] Emitter: Generate Classes: 1181778 us
+[debug] Emitter: Write trees: 48540 us
 [debug] Emitter: Class tree cache stats: reused: 0 -- invalidated: 868
-[debug] Emitter: Method tree cache stats: reused: 0 -- invalidated: 4256
-[debug] Emitter: Pre prints: 5988
-[debug] Emitter: 1186661 us
-[debug] BasicBackend: Write result: 79177 us
+[debug] Emitter: Method tree cache stats: reused: 0 -- invalidated: 4257
+[debug] Emitter: Pre prints: 5989
+[debug] Emitter: 1311293 us
+[debug] BasicBackend: Write result: 143879 us
 [debug] BasicBackend: total modules: 1; re-written: 1
