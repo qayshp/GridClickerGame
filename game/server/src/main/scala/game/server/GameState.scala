@@ -14,6 +14,8 @@ val GRID_H      = 20
 val FOOD_COUNT  = 20
 val FOOD_POINTS = 5
 
+val UPGRADE_COSTS = Map("pathfinder" -> 5)
+
 val PLAYER_COLORS = Vector(
   "#e74c3c", "#3498db", "#2ecc71", "#f39c12",
   "#9b59b6", "#1abc9c", "#e67e22", "#e91e63",
@@ -38,6 +40,17 @@ def initialFood(n: Int): Set[(Int, Int)] =
     s += ((rng.nextInt(GRID_W), rng.nextInt(GRID_H)))
     attempts += 1
   s
+
+// Returns (dx, dy) stepping toward the nearest food pellet
+def dirTowardFood(p: Player, food: Set[(Int, Int)], dirs: Vector[(Int, Int)]): (Int, Int) =
+  if food.isEmpty then dirs(Random.nextInt(dirs.size))
+  else
+    val nearest = food.minBy(f => Math.abs(f._1 - p.x) + Math.abs(f._2 - p.y))
+    val rx = nearest._1 - p.x
+    val ry = nearest._2 - p.y
+    if rx == 0 && ry == 0 then dirs(Random.nextInt(dirs.size))
+    else if Math.abs(rx) >= Math.abs(ry) then (rx.sign, 0)
+    else (0, ry.sign)
 
 class GameState(
   playersRef:    Ref[IO, Map[String, Player]],
@@ -77,7 +90,7 @@ class GameState(
                         _  <- ps.get(pid).traverse_ { p =>
                                 val ghost = p.copy(online = false)
                                 playersRef.update(_.updated(pid, ghost)) *>
-                                GameApi.savePlayerData(pid, p.x, p.y, p.points)
+                                GameApi.savePlayerData(pid, p.x, p.y, p.points, p.upgrades)
                               }
                         _  <- broadcastCurrent()
                       yield ()
@@ -102,19 +115,40 @@ class GameState(
                           safeName = name.take(12).trim match
                             case "" => "Player"
                             case n  => n
-                          saved <- GameApi.loadPlayerData(playerId)
-                          sx    = saved.map(_.x).getOrElse(GRID_W / 2)
-                          sy    = saved.map(_.y).getOrElse(GRID_H / 2)
-                          sp    = saved.map(_.points).getOrElse(0)
-                          p     = Player(playerId, sx, sy, color, safeName, online = true, points = sp)
-                          _    <- playersRef.update(_.updated(playerId, p))
+                          saved    <- GameApi.loadPlayerData(playerId)
+                          sx        = saved.map(_.x).getOrElse(GRID_W / 2)
+                          sy        = saved.map(_.y).getOrElse(GRID_H / 2)
+                          sp        = saved.map(_.points).getOrElse(0)
+                          su        = saved.map(_.upgrades).getOrElse("").split(",").filter(_.nonEmpty).toSet
+                          p         = Player(playerId, sx, sy, color, safeName, online = true, points = sp, upgrades = su)
+                          _        <- playersRef.update(_.updated(playerId, p))
                         yield ()
         _ <- broadcastCurrent()
       yield ()
 
     case ClientMsg.Move(_, _) => IO.unit   // movement is server-driven
 
-  // Move one player without broadcasting (used by the tick)
+    case ClientMsg.BuyUpgrade(upgradeId) =>
+      val cost = UPGRADE_COSTS.getOrElse(upgradeId, Int.MaxValue)
+      for
+        connPlayer <- connPlayerRef.get
+        _          <- connPlayer.get(connId).traverse_ { pid =>
+                        for
+                          ps <- playersRef.get
+                          _  <- ps.get(pid).traverse_ { p =>
+                                  if p.points >= cost && !p.upgrades.contains(upgradeId) then
+                                    val upgraded = p.copy(
+                                      points   = p.points - cost,
+                                      upgrades = p.upgrades + upgradeId
+                                    )
+                                    playersRef.update(_.updated(pid, upgraded))
+                                  else IO.unit
+                                }
+                          _ <- broadcastCurrent()
+                        yield ()
+                      }
+      yield ()
+
   private def movePlayer(playerId: String, dx: Int, dy: Int): IO[Unit] =
     for
       ps <- playersRef.get
@@ -156,16 +190,18 @@ class GameState(
                   case Some(newPos) => foodRef.set(without + newPos)
     yield ()
 
-  // One game tick: move every online player randomly + wander food + broadcast
   def tick(): IO[Unit] =
     for
-      ps <- playersRef.get
-      _  <- ps.values.toList.filter(_.online).traverse_ { p =>
-              val (dx, dy) = DIRS(Random.nextInt(DIRS.size))
-              movePlayer(p.id, dx, dy)
-            }
-      _  <- wanderOneFood()
-      _  <- broadcastCurrent()
+      ps   <- playersRef.get
+      food <- foodRef.get   // snapshot for pathfinder direction
+      _    <- ps.values.toList.filter(_.online).traverse_ { p =>
+                val (dx, dy) =
+                  if p.upgrades.contains("pathfinder") then dirTowardFood(p, food, DIRS)
+                  else DIRS(Random.nextInt(DIRS.size))
+                movePlayer(p.id, dx, dy)
+              }
+      _    <- wanderOneFood()
+      _    <- broadcastCurrent()
     yield ()
 
   def startTickLoop(): IO[Nothing] =

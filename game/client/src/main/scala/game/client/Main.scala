@@ -14,7 +14,7 @@ object Main:
   val GRID_H   = 20
   val MAX_CELL = 28
   val MIN_CELL = 8
-  val ANIM_DUR = 500.0   // ms
+  val ANIM_DUR = 500.0
 
   var cell: Int = MAX_CELL
   var players: Map[String, Player] = Map.empty
@@ -92,25 +92,32 @@ object Main:
 
     ws = new WebSocket(wsUrl)
 
+    // Wire up the shop button
+    val pfBtn = dom.document.getElementById("upgrade-pathfinder-btn")
+    if pfBtn != null then
+      pfBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("pathfinder")))
+
     ws.onopen = (_: Event) =>
       connected = true
       myId = if userId.nonEmpty then userId
              else s"p-${(js.Math.random() * 0xFFFFFFF).toInt.toHexString}"
       send(ClientMsg.Join(playerName, myId, userId))
+      val shopPanel = dom.document.getElementById("shop-panel")
+      if shopPanel != null then
+        shopPanel.asInstanceOf[html.Div].style.display = "flex"
 
     ws.onmessage = (e: MessageEvent) =>
-      val state   = read[ServerState](e.data.toString)
+      val state      = read[ServerState](e.data.toString)
       val newFoodSet = state.food.map(f => (f.x, f.y)).toSet
-
-      // Detect eaten pellets: was in prev food, gone now, player is standing there
-      val eaten    = prevFood -- newFoodSet
-      val onlinePosSet = state.players.values.filter(_.online).map(p => (p.x, p.y)).toSet
-      val now      = dom.window.performance.now()
-      val newAnims = eaten.filter(onlinePosSet.contains).map(pos => EatAnim(pos._1, pos._2, now)).toList
+      val eaten      = prevFood -- newFoodSet
+      val onlinePos  = state.players.values.filter(_.online).map(p => (p.x, p.y)).toSet
+      val now        = dom.window.performance.now()
+      val newAnims   = eaten.filter(onlinePos.contains).map(pos => EatAnim(pos._1, pos._2, now)).toList
 
       players  = state.players
       food     = state.food
       prevFood = newFoodSet
+
       if newAnims.nonEmpty then
         eatAnims = eatAnims.filter(a => now - a.startMs < ANIM_DUR) ++ newAnims
         kickAnims(ctx, canvas)
@@ -120,7 +127,9 @@ object Main:
         status.textContent =
           if userId.isEmpty then s"Guest  •  $pts  •  login to save"
           else s"Playing as: $playerName  •  $pts"
+        updateShopUI(me)
       }
+
       renderFrame(ctx, canvas)
 
     ws.onclose = (_: Event) =>
@@ -130,6 +139,22 @@ object Main:
     ws.onerror = (_: Event) =>
       status.textContent = "Connection error."
 
+  def updateShopUI(me: Player): Unit =
+    val btn = dom.document.getElementById("upgrade-pathfinder-btn")
+    if btn == null then return
+    val b = btn.asInstanceOf[html.Button]
+    if me.upgrades.contains("pathfinder") then
+      b.textContent = "Pathfinder  ★  (owned)"
+      b.disabled = true
+      b.setAttribute("data-state", "owned")
+    else if me.points >= 5 then
+      b.textContent = "Pathfinder  —  5 pts"
+      b.disabled = false
+      b.setAttribute("data-state", "")
+    else
+      b.textContent = s"Pathfinder  —  5 pts  (need ${5 - me.points} more)"
+      b.disabled = true
+      b.setAttribute("data-state", "")
 
   def send(msg: ClientMsg): Unit =
     if ws != null && ws.readyState == WebSocket.OPEN then
@@ -175,47 +200,38 @@ object Main:
     for a <- eatAnims do drawEatAnim(ctx, a, c, now)
 
   def drawEatAnim(ctx: CanvasRenderingContext2D, a: EatAnim, c: Int, now: Double): Unit =
-    val t      = ((now - a.startMs) / ANIM_DUR).min(1.0)   // 0 → 1
-    val cx     = a.x * c + c / 2.0
-    val cy     = a.y * c + c / 2.0
-    val eased  = 1.0 - Math.pow(1.0 - t, 2)                // ease-out quad
-    val alpha  = (1.0 - t) * 0.9
+    val t     = ((now - a.startMs) / ANIM_DUR).min(1.0)
+    val cx    = a.x * c + c / 2.0
+    val cy    = a.y * c + c / 2.0
+    val eased = 1.0 - Math.pow(1.0 - t, 2)
+    val alpha = (1.0 - t) * 0.9
 
     ctx.save()
     ctx.globalAlpha = alpha
 
-    // Outer expanding ring
     val outerR = eased * c * 0.9
     ctx.strokeStyle = "#ffe84d"
     ctx.lineWidth   = (3 * (1.0 - t)).max(0.5)
     ctx.shadowColor = "#ffe84d"
     ctx.shadowBlur  = 10
-    ctx.beginPath()
-    ctx.arc(cx, cy, outerR, 0, 2 * Math.PI)
-    ctx.stroke()
+    ctx.beginPath(); ctx.arc(cx, cy, outerR, 0, 2 * Math.PI); ctx.stroke()
 
-    // Inner ring (smaller, faster)
     val innerR = eased * c * 0.45
     ctx.strokeStyle = "#ffffff"
     ctx.lineWidth   = (2 * (1.0 - t)).max(0.3)
     ctx.shadowBlur  = 0
-    ctx.beginPath()
-    ctx.arc(cx, cy, innerR, 0, 2 * Math.PI)
-    ctx.stroke()
+    ctx.beginPath(); ctx.arc(cx, cy, innerR, 0, 2 * Math.PI); ctx.stroke()
 
-    // 6 sparkle dots flying outward
-    ctx.fillStyle  = "#ffe84d"
+    ctx.fillStyle   = "#ffe84d"
     ctx.shadowColor = "#ffe84d"
     ctx.shadowBlur  = 6
     val dotR = (c / 10).max(2).toDouble
     for i <- 0 until 6 do
-      val angle  = (i * Math.PI / 3.0) + t * 0.8
-      val dist   = eased * c * 0.75
-      val dx     = cx + Math.cos(angle) * dist
-      val dy     = cy + Math.sin(angle) * dist
-      ctx.beginPath()
-      ctx.arc(dx, dy, dotR * (1.0 - t * 0.6), 0, 2 * Math.PI)
-      ctx.fill()
+      val angle = (i * Math.PI / 3.0) + t * 0.8
+      val dist  = eased * c * 0.75
+      val dx    = cx + Math.cos(angle) * dist
+      val dy    = cy + Math.sin(angle) * dist
+      ctx.beginPath(); ctx.arc(dx, dy, dotR * (1.0 - t * 0.6), 0, 2 * Math.PI); ctx.fill()
 
     ctx.restore()
 
@@ -225,8 +241,7 @@ object Main:
     val size = (c / 3).max(4)
     val off  = (c - size) / 2
     ctx.save()
-    ctx.shadowColor = "#ffe84d"
-    ctx.shadowBlur  = 12
+    ctx.shadowColor = "#ffe84d"; ctx.shadowBlur = 12
     ctx.fillStyle   = "#ffe84d"
     ctx.fillRect(fx + off, fy + off, size, size)
     val dot = (size / 3).max(1)
@@ -237,21 +252,22 @@ object Main:
   def drawPlayer(ctx: CanvasRenderingContext2D, p: Player, isMe: Boolean, c: Int): Unit =
     val px = p.x * c
     val py = p.y * c
+    val hasPf = p.upgrades.contains("pathfinder")
 
     ctx.save()
 
     if !p.online then ctx.globalAlpha = 0.35
 
     if isMe && p.online then
-      ctx.shadowColor = p.color
-      ctx.shadowBlur = 10
-    else
-      ctx.shadowBlur = 0
+      ctx.shadowColor = p.color; ctx.shadowBlur = 10
+    else ctx.shadowBlur = 0
 
+    // Body
     ctx.fillStyle = if p.online then p.color else "#666688"
     ctx.fillRect(px + c/5, py + c*3/8, c*3/5, c*5/8 - 2)
     ctx.fillRect(px + c*3/10, py + c/10, c*2/5, c*3/8)
 
+    // Eyes
     if p.online then
       ctx.fillStyle = "#ffffff"
       ctx.fillRect(px + c*2/5, py + c/7, (c/9).max(2), (c/9).max(2))
@@ -261,13 +277,24 @@ object Main:
       ctx.fillRect(px + c*2/5, py + c/7 + (c/9).max(2)/2, (c/9).max(2), 1)
       ctx.fillRect(px + c - c*2/5 - (c/9).max(2), py + c/7 + (c/9).max(2)/2, (c/9).max(2), 1)
 
+    // My-player border
     if isMe && p.online then
-      ctx.strokeStyle = "#ffffff"
-      ctx.lineWidth = 1.0
+      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.0
       ctx.strokeRect(px + 1, py + 1, c - 2, c - 2)
 
     ctx.shadowBlur = 0
 
+    // Pathfinder star badge (top-right corner of cell)
+    if hasPf && p.online && c >= 14 then
+      val starSize = Math.max(8, c / 3)
+      ctx.font = s"${starSize}px monospace"
+      ctx.textAlign = "right"
+      ctx.shadowColor = "#ffe84d"; ctx.shadowBlur = 8
+      ctx.fillStyle = "#ffe84d"
+      ctx.fillText("★", px + c - 1, py + starSize + 1)
+      ctx.shadowBlur = 0
+
+    // Name + pts labels
     if c >= 14 then
       ctx.fillStyle = if isMe then "#ffffff" else if p.online then "#aaaacc" else "#666688"
       val fontSize = Math.max(7, c / 4)
@@ -275,9 +302,8 @@ object Main:
       ctx.textAlign = "center"
       val nameLine = if p.online then p.name else s"${p.name} (away)"
       ctx.fillText(nameLine, px + c / 2, py + c + fontSize)
-      val ptsLine = s"${p.points} pts"
       ctx.font = s"${(fontSize * 0.85).toInt}px monospace"
       ctx.fillStyle = if isMe then "#aaffaa" else if p.online then "#7777aa" else "#555577"
-      ctx.fillText(ptsLine, px + c / 2, py + c + fontSize * 2)
+      ctx.fillText(s"${p.points} pts", px + c / 2, py + c + fontSize * 2)
 
     ctx.restore()

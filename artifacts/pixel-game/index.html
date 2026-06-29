@@ -70,6 +70,54 @@
       flex-shrink: 0;
     }
     #gameCanvas { display: block; image-rendering: pixelated; }
+
+    /* Shop panel */
+    #shop-panel {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: #0d0d1e;
+      border: 1px solid #1e1e40;
+      border-radius: 6px;
+      flex-shrink: 0;
+      width: 100%;
+      max-width: max-content;
+    }
+    .shop-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: #4444aa;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    #upgrade-pathfinder-btn {
+      font-family: 'Courier New', monospace;
+      font-size: clamp(10px, 2vw, 12px);
+      padding: 4px 12px;
+      background: #0f0f2e;
+      color: #ffe84d;
+      border: 1px solid #665500;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    #upgrade-pathfinder-btn:hover:not(:disabled) {
+      background: #1a1a44;
+      border-color: #ffe84d;
+    }
+    #upgrade-pathfinder-btn:disabled {
+      cursor: default;
+      opacity: 0.55;
+    }
+    #upgrade-pathfinder-btn[data-state="owned"] {
+      color: #ffe84d;
+      border-color: #ffe84d;
+      opacity: 1;
+    }
+
     footer {
       margin-top: 8px;
       font-size: clamp(9px, 2vw, 11px);
@@ -92,6 +140,10 @@
   </header>
   <div id="canvas-wrap">
     <canvas id="gameCanvas"></canvas>
+  </div>
+  <div id="shop-panel">
+    <span class="shop-label">Shop</span>
+    <button id="upgrade-pathfinder-btn" disabled>Pathfinder  —  5 pts</button>
   </div>
   <footer>
     Players move automatically every second &nbsp;·&nbsp;

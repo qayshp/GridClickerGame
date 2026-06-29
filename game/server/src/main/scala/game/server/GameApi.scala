@@ -5,8 +5,8 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import upickle.default.*
 
-case class SavedPlayerData(x: Int, y: Int, points: Int) derives ReadWriter
-case class SavePlayerDataReq(userId: String, x: Int, y: Int, points: Int) derives ReadWriter
+case class SavedPlayerData(x: Int, y: Int, points: Int, upgrades: String) derives ReadWriter
+case class SavePlayerDataReq(userId: String, x: Int, y: Int, points: Int, upgrades: String) derives ReadWriter
 
 object GameApi:
   private val apiBase = s"http://localhost:${sys.env.getOrElse("API_PORT", "8080")}"
@@ -24,10 +24,10 @@ object GameApi:
       else None
     }.handleError(_ => None)
 
-  def savePlayerData(userId: String, x: Int, y: Int, points: Int): IO[Unit] =
+  def savePlayerData(userId: String, x: Int, y: Int, points: Int, upgrades: Set[String]): IO[Unit] =
     if userId.isEmpty then IO.unit
     else IO.blocking {
-      val body = write(SavePlayerDataReq(userId, x, y, points))
+      val body = write(SavePlayerDataReq(userId, x, y, points, upgrades.mkString(",")))
       val req = HttpRequest.newBuilder()
         .uri(URI.create(s"$apiBase/api/game/position"))
         .POST(HttpRequest.BodyPublishers.ofString(body))
