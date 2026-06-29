@@ -1,25 +1,25 @@
 [info] Fast optimizing /home/runner/workspace/game/client/target/scala-3.3.4/client-fastopt
-[debug] Linker: Compute reachability: 1300704 us
-[debug] Linker: Assemble LinkedClasses: 52881 us
-[debug] Linker: 1381424 us
+[debug] Linker: Compute reachability: 1125201 us
+[debug] Linker: Assemble LinkedClasses: 90249 us
+[debug] Linker: 1237390 us
 [debug] Optimizer: Batch mode: true
-[debug] Optimizer: Incremental part: 239258 us
-[debug] Optimizer: Elidable constructors: 6458 us
-[debug] Optimizer: Optimizing 8518 methods.
-[debug] Optimizer: Optimizer part: 2326074 us
-[debug] Optimizer: 2583166 us
-[debug] Refiner: Compute reachability: 203028 us
-[debug] Refiner: Assemble LinkedClasses: 30538 us
-[debug] Refiner: 241458 us
-[debug] Module Splitter: Calculate Dependency Info: 2024 us
-[debug] Module Splitter: Analyze Modules: 3285 us
-[debug] Module Splitter: Assemble Modules: 11588 us
-[debug] Module Splitter: 19696 us
-[debug] Emitter: Generate Classes: 1181778 us
-[debug] Emitter: Write trees: 48540 us
+[debug] Optimizer: Incremental part: 385789 us
+[debug] Optimizer: Elidable constructors: 6848 us
+[debug] Optimizer: Optimizing 8523 methods.
+[debug] Optimizer: Optimizer part: 1397834 us
+[debug] Optimizer: 1806693 us
+[debug] Refiner: Compute reachability: 191561 us
+[debug] Refiner: Assemble LinkedClasses: 14105 us
+[debug] Refiner: 211441 us
+[debug] Module Splitter: Calculate Dependency Info: 6491 us
+[debug] Module Splitter: Analyze Modules: 1100 us
+[debug] Module Splitter: Assemble Modules: 7800 us
+[debug] Module Splitter: 17512 us
+[debug] Emitter: Generate Classes: 801295 us
+[debug] Emitter: Write trees: 31274 us
 [debug] Emitter: Class tree cache stats: reused: 0 -- invalidated: 868
 [debug] Emitter: Method tree cache stats: reused: 0 -- invalidated: 4257
 [debug] Emitter: Pre prints: 5989
-[debug] Emitter: 1311293 us
-[debug] BasicBackend: Write result: 143879 us
+[debug] Emitter: 880030 us
+[debug] BasicBackend: Write result: 82254 us
 [debug] BasicBackend: total modules: 1; re-written: 1

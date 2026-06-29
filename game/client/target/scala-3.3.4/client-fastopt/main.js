@@ -1216,7 +1216,6 @@ $c_Lgame_client_Main$.prototype.connectGame__T__T__Lorg_scalajs_dom_HTMLCanvasEl
     this.Lgame_client_Main$__f_myId = $x_1;
     var clientId = this.Lgame_client_Main$__f_myId;
     this.send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Join(playerName, clientId, userId));
-    status.textContent = ("Playing as: " + playerName);
   });
   this.Lgame_client_Main$__f_ws.onmessage = ((e) => {
     var this$11 = $m_Lupickle_default$();
@@ -1227,6 +1226,12 @@ $c_Lgame_client_Main$.prototype.connectGame__T__T__Lorg_scalajs_dom_HTMLCanvasEl
     var evidence$3 = $m_Lgame_shared_ServerState$().derived$ReadWriter__Lupickle_core_Types$ReadWriter();
     var state = $as_Lgame_shared_ServerState($f_Lupickle_Api__read__Lujson_Readable__Z__Lupickle_core_Types$Reader__O(this$11, s$1, trace, evidence$3));
     this.Lgame_client_Main$__f_players = $n(state).Lgame_shared_ServerState__f_players;
+    var this$12 = $n($n(this.Lgame_client_Main$__f_players).get__O__s_Option(this.Lgame_client_Main$__f_myId));
+    if ((!this$12.isEmpty__Z())) {
+      var arg1 = this$12.get__O();
+      var me = $as_Lgame_shared_Player(arg1);
+      status.textContent = (((("Playing as: " + playerName) + "  \u2022  ") + $n(me).Lgame_shared_Player__f_points) + " pts");
+    }
     this.renderFrame__Lorg_scalajs_dom_CanvasRenderingContext2D__Lorg_scalajs_dom_HTMLCanvasElement__V(ctx, canvas);
   });
   this.Lgame_client_Main$__f_ws.onclose = ((_$6) => {
@@ -1431,10 +1436,16 @@ $c_Lgame_client_Main$.prototype.drawPlayer__Lorg_scalajs_dom_CanvasRenderingCont
     var fontSize = ((b < 7) ? 7 : b);
     ctx.font = (("bold " + fontSize) + "px monospace");
     ctx.textAlign = "center";
-    var label = ($n(p).Lgame_shared_Player__f_online ? $n(p).Lgame_shared_Player__f_name : ($n(p).Lgame_shared_Player__f_name + " (away)"));
+    var nameLine = ($n(p).Lgame_shared_Player__f_online ? $n(p).Lgame_shared_Player__f_name : ($n(p).Lgame_shared_Player__f_name + " (away)"));
     var x$36 = ((px + ((c / 2) | 0)) | 0);
     var x$37 = ((((py + c) | 0) + fontSize) | 0);
-    ctx.fillText(label, x$36, x$37);
+    ctx.fillText(nameLine, x$36, x$37);
+    var ptsLine = ($n(p).Lgame_shared_Player__f_points + " pts");
+    ctx.font = ($doubleToInt((0.85 * fontSize)) + "px monospace");
+    ctx.fillStyle = (isMe ? "#aaffaa" : ($n(p).Lgame_shared_Player__f_online ? "#7777aa" : "#555577"));
+    var x$38 = ((px + ((c / 2) | 0)) | 0);
+    var x$39 = ((((py + c) | 0) + (fontSize << 1)) | 0);
+    ctx.fillText(ptsLine, x$38, x$39);
   }
   ctx.restore();
 });
@@ -15623,7 +15634,7 @@ $c_Lgame_shared_Player$.prototype.derived$ReadWriter__Lupickle_core_Types$ReadWr
   return this.Lgame_shared_Player$__f_derived$ReadWriter$lzy1;
 });
 $c_Lgame_shared_Player$.prototype.fromProduct__s_Product__Lgame_shared_Player = (function(x$0) {
-  return new $c_Lgame_shared_Player($as_T($n(x$0).productElement__I__O(0)), $uI($n(x$0).productElement__I__O(1)), $uI($n(x$0).productElement__I__O(2)), $as_T($n(x$0).productElement__I__O(3)), $as_T($n(x$0).productElement__I__O(4)), $uZ($n(x$0).productElement__I__O(5)));
+  return new $c_Lgame_shared_Player($as_T($n(x$0).productElement__I__O(0)), $uI($n(x$0).productElement__I__O(1)), $uI($n(x$0).productElement__I__O(2)), $as_T($n(x$0).productElement__I__O(3)), $as_T($n(x$0).productElement__I__O(4)), $uZ($n(x$0).productElement__I__O(5)), $uI($n(x$0).productElement__I__O(6)));
 });
 $c_Lgame_shared_Player$.prototype.fromProduct__s_Product__O = (function(p) {
   return this.fromProduct__s_Product__Lgame_shared_Player(p);
@@ -20162,19 +20173,21 @@ function $f_Lupickle_implicits_Writers$SimpleMapKeyWriter__write0__Lupickle_core
   return $n(out).visitString__jl_CharSequence__I__O($thiz.writeString__O__T(v), (-1));
 }
 /** @constructor */
-function $c_Lgame_shared_Player(id, x, y, color, name, online) {
+function $c_Lgame_shared_Player(id, x, y, color, name, online, points) {
   this.Lgame_shared_Player__f_id = null;
   this.Lgame_shared_Player__f_x = 0;
   this.Lgame_shared_Player__f_y = 0;
   this.Lgame_shared_Player__f_color = null;
   this.Lgame_shared_Player__f_name = null;
   this.Lgame_shared_Player__f_online = false;
+  this.Lgame_shared_Player__f_points = 0;
   this.Lgame_shared_Player__f_id = id;
   this.Lgame_shared_Player__f_x = x;
   this.Lgame_shared_Player__f_y = y;
   this.Lgame_shared_Player__f_color = color;
   this.Lgame_shared_Player__f_name = name;
   this.Lgame_shared_Player__f_online = online;
+  this.Lgame_shared_Player__f_points = points;
 }
 $c_Lgame_shared_Player.prototype = new $h_O();
 $c_Lgame_shared_Player.prototype.constructor = $c_Lgame_shared_Player;
@@ -20212,14 +20225,17 @@ $c_Lgame_shared_Player.prototype.hashCode__I = (function() {
   var data$6 = (this.Lgame_shared_Player__f_online ? 1231 : 1237);
   acc = $m_sr_Statics$().mix__I__I__I(hash$6, data$6);
   var hash$7 = acc;
-  return $m_sr_Statics$().finalizeHash__I__I__I(hash$7, 6);
+  var data$7 = this.Lgame_shared_Player__f_points;
+  acc = $m_sr_Statics$().mix__I__I__I(hash$7, data$7);
+  var hash$8 = acc;
+  return $m_sr_Statics$().finalizeHash__I__I__I(hash$8, 7);
 });
 $c_Lgame_shared_Player.prototype.equals__O__Z = (function(x$0) {
   if ((this === x$0)) {
     return true;
   } else if ((x$0 instanceof $c_Lgame_shared_Player)) {
     var x$0$2 = $as_Lgame_shared_Player(x$0);
-    return (((((((this.Lgame_shared_Player__f_x === $n(x$0$2).Lgame_shared_Player__f_x) && (this.Lgame_shared_Player__f_y === $n(x$0$2).Lgame_shared_Player__f_y)) && (this.Lgame_shared_Player__f_online === $n(x$0$2).Lgame_shared_Player__f_online)) && (this.Lgame_shared_Player__f_id === $n(x$0$2).Lgame_shared_Player__f_id)) && (this.Lgame_shared_Player__f_color === $n(x$0$2).Lgame_shared_Player__f_color)) && (this.Lgame_shared_Player__f_name === $n(x$0$2).Lgame_shared_Player__f_name)) && ($n(x$0$2), true));
+    return ((((((((this.Lgame_shared_Player__f_x === $n(x$0$2).Lgame_shared_Player__f_x) && (this.Lgame_shared_Player__f_y === $n(x$0$2).Lgame_shared_Player__f_y)) && (this.Lgame_shared_Player__f_online === $n(x$0$2).Lgame_shared_Player__f_online)) && (this.Lgame_shared_Player__f_points === $n(x$0$2).Lgame_shared_Player__f_points)) && (this.Lgame_shared_Player__f_id === $n(x$0$2).Lgame_shared_Player__f_id)) && (this.Lgame_shared_Player__f_color === $n(x$0$2).Lgame_shared_Player__f_color)) && (this.Lgame_shared_Player__f_name === $n(x$0$2).Lgame_shared_Player__f_name)) && ($n(x$0$2), true));
   } else {
     return false;
   }
@@ -20228,7 +20244,7 @@ $c_Lgame_shared_Player.prototype.toString__T = (function() {
   return $m_sr_ScalaRunTime$()._toString__s_Product__T(this);
 });
 $c_Lgame_shared_Player.prototype.productArity__I = (function() {
-  return 6;
+  return 7;
 });
 $c_Lgame_shared_Player.prototype.productPrefix__T = (function() {
   return "Player";
@@ -20257,6 +20273,10 @@ $c_Lgame_shared_Player.prototype.productElement__I__O = (function(n) {
     }
     case 5: {
       return this.Lgame_shared_Player__f_online;
+      break;
+    }
+    case 6: {
+      return this.Lgame_shared_Player__f_points;
       break;
     }
     default: {
@@ -25346,7 +25366,7 @@ $c_Lgame_shared_Player$$anon$2.prototype.write0__Lupickle_core_Visitor__Lgame_sh
   if ((v === null)) {
     return $n(out).visitNull__I__O((-1));
   } else {
-    var ctx = $n(out).visitObject__I__Z__I__Lupickle_core_ObjVisitor(6, true, (-1));
+    var ctx = $n(out).visitObject__I__Z__I__Lupickle_core_ObjVisitor(7, true, (-1));
     $n($n(this.Lgame_shared_Player$$anon$2__f_WritersVersionSpecific_this$2).Lupickle_default$__f_outerThis);
     var mappedArgsI = "id";
     var w = $m_Lupickle_default$().Lupickle_default$__f_StringWriter;
@@ -25377,6 +25397,11 @@ $c_Lgame_shared_Player$$anon$2.prototype.write0__Lupickle_core_Visitor__Lgame_sh
     var w$5 = $m_Lupickle_default$().Lupickle_default$__f_BooleanWriter;
     var value$5 = $n(v).Lgame_shared_Player__f_online;
     $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$5, w$5, value$5);
+    $n($n(this.Lgame_shared_Player$$anon$2__f_WritersVersionSpecific_this$2).Lupickle_default$__f_outerThis);
+    var mappedArgsI$6 = "points";
+    var w$6 = $m_Lupickle_default$().Lupickle_default$__f_IntWriter;
+    var value$6 = $n(v).Lgame_shared_Player__f_points;
+    $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$6, w$6, value$6);
     return $n(ctx).visitEnd__I__O((-1));
   }
 });
@@ -25411,10 +25436,15 @@ $c_Lgame_shared_Player$$anon$2.prototype.writeToObject__Lupickle_core_ObjVisitor
   var w$5 = $m_Lupickle_default$().Lupickle_default$__f_BooleanWriter;
   var value$5 = $n(v).Lgame_shared_Player__f_online;
   $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$5, w$5, value$5);
+  $n($n(this.Lgame_shared_Player$$anon$2__f_WritersVersionSpecific_this$2).Lupickle_default$__f_outerThis);
+  var mappedArgsI$6 = "points";
+  var w$6 = $m_Lupickle_default$().Lupickle_default$__f_IntWriter;
+  var value$6 = $n(v).Lgame_shared_Player__f_points;
+  $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$6, w$6, value$6);
 });
 $c_Lgame_shared_Player$$anon$2.prototype.length__O__I = (function(v) {
   $as_Lgame_shared_Player(v);
-  return 6;
+  return 7;
 });
 $c_Lgame_shared_Player$$anon$2.prototype.write0__Lupickle_core_Visitor__O__O = (function(out, v) {
   return this.write0__Lupickle_core_Visitor__Lgame_shared_Player__O(out, $as_Lgame_shared_Player(v));
@@ -37797,7 +37827,7 @@ function $c_Lgame_shared_Player$$anon$1(ReadersVersionSpecific_this$1, m$1, oute
   if ((outer === null)) {
     throw $ct_jl_NullPointerException__(new $c_jl_NullPointerException());
   }
-  $ct_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__Lupickle_implicits_ReadersVersionSpecific__I__J__Z__(this, ReadersVersionSpecific_this$1, 6, new $c_RTLong(63, 0), $m_Lgame_shared_Player$().game$shared$Player$$$_$_$$anon$superArg$1$1__Lupickle_default$__Z(ReadersVersionSpecific_this$1));
+  $ct_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__Lupickle_implicits_ReadersVersionSpecific__I__J__Z__(this, ReadersVersionSpecific_this$1, 7, new $c_RTLong(127, 0), $m_Lgame_shared_Player$().game$shared$Player$$$_$_$$anon$superArg$1$1__Lupickle_default$__Z(ReadersVersionSpecific_this$1));
 }
 $c_Lgame_shared_Player$$anon$1.prototype = new $h_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader();
 $c_Lgame_shared_Player$$anon$1.prototype.constructor = $c_Lgame_shared_Player$$anon$1;
@@ -37812,14 +37842,16 @@ $c_Lgame_shared_Player$$anon$1.prototype.visitors0__s_Product = (function() {
   var x$2$4 = $m_Lupickle_default$().Lupickle_default$__f_StringReader;
   var x$2$5 = $m_Lupickle_default$().Lupickle_default$__f_StringReader;
   var x$2$6 = $m_Lupickle_default$().Lupickle_default$__f_BooleanReader;
+  var x$2$7 = $m_Lupickle_default$().Lupickle_default$__f_IntReader;
   var Tuple_this = $m_T$package$EmptyTuple$();
-  var res = $as_T1($m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$6, Tuple_this));
-  var res$2 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$5, res);
-  var res$3 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$4, res$2);
-  var res$4 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$3, res$3);
-  var res$5 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$2, res$4);
-  var res$6 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2, res$5);
-  return res$6;
+  var res = $as_T1($m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$7, Tuple_this));
+  var res$2 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$6, res);
+  var res$3 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$5, res$2);
+  var res$4 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$4, res$3);
+  var res$5 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$3, res$4);
+  var res$6 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$2, res$5);
+  var res$7 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2, res$6);
+  return res$7;
 });
 $c_Lgame_shared_Player$$anon$1.prototype.fromProduct__s_Product__Lgame_shared_Player = (function(p) {
   return $as_Lgame_shared_Player($n(this.Lgame_shared_Player$$anon$1__f_m$2).fromProduct__s_Product__O(p));
@@ -37850,24 +37882,28 @@ $c_Lgame_shared_Player$$anon$1.prototype.keyToIndex__T__I = (function(x) {
       return 5;
       break;
     }
+    case "points": {
+      return 6;
+      break;
+    }
     default: {
       return (-1);
     }
   }
 });
 $c_Lgame_shared_Player$$anon$1.prototype.allKeysArray__AT = (function() {
-  var this$7 = new $c_sci_$colon$colon(new $c_T2("id", "id"), new $c_sci_$colon$colon(new $c_T2("x", "x"), new $c_sci_$colon$colon(new $c_T2("y", "y"), new $c_sci_$colon$colon(new $c_T2("color", "color"), new $c_sci_$colon$colon(new $c_T2("name", "name"), new $c_sci_$colon$colon(new $c_T2("online", "online"), $m_sci_Nil$()))))));
+  var this$8 = new $c_sci_$colon$colon(new $c_T2("id", "id"), new $c_sci_$colon$colon(new $c_T2("x", "x"), new $c_sci_$colon$colon(new $c_T2("y", "y"), new $c_sci_$colon$colon(new $c_T2("color", "color"), new $c_sci_$colon$colon(new $c_T2("name", "name"), new $c_sci_$colon$colon(new $c_T2("online", "online"), new $c_sci_$colon$colon(new $c_T2("points", "points"), $m_sci_Nil$())))))));
   var f = ((_$1) => {
     var _$1$1 = $as_T2(_$1);
     return $as_T($n(_$1$1).T2__f__2);
   });
-  if ((this$7 === $m_sci_Nil$())) {
-    var this$9 = $m_sci_Nil$();
+  if ((this$8 === $m_sci_Nil$())) {
+    var this$10 = $m_sci_Nil$();
   } else {
-    var arg1 = this$7.sci_$colon$colon__f_head;
+    var arg1 = this$8.sci_$colon$colon__f_head;
     var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
     var t = h;
-    var rest = this$7.sci_$colon$colon__f_next;
+    var rest = this$8.sci_$colon$colon__f_next;
     while ((rest !== $m_sci_Nil$())) {
       var arg1$1 = $n(rest).head__O();
       var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
@@ -37875,12 +37911,12 @@ $c_Lgame_shared_Player$$anon$1.prototype.allKeysArray__AT = (function() {
       t = nx;
       rest = $as_sci_List($n(rest).tail__O());
     }
-    var this$9 = h;
+    var this$10 = h;
   }
-  if ((this$9.knownSize__I() >= 0)) {
-    var len = this$9.knownSize__I();
+  if ((this$10.knownSize__I() >= 0)) {
+    var len = this$10.knownSize__I();
     var destination = new ($d_T.getArrayOf().constr)(len);
-    $f_sc_IterableOnceOps__copyToArray__O__I__I__I(this$9, destination, 0, 2147483647);
+    $f_sc_IterableOnceOps__copyToArray__O__I__I__I(this$10, destination, 0, 2147483647);
     return destination;
   } else {
     var capacity = 0;
@@ -37889,7 +37925,7 @@ $c_Lgame_shared_Player$$anon$1.prototype.allKeysArray__AT = (function() {
     capacity = 0;
     size = 0;
     jsElems = [];
-    var it = this$9.iterator__sc_Iterator();
+    var it = this$10.iterator__sc_Iterator();
     while ($n(it).hasNext__Z()) {
       var elem = $n(it).next__O();
       var unboxedElem = ((elem === null) ? null : elem);

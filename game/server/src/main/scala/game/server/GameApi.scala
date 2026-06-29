@@ -5,14 +5,14 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import upickle.default.*
 
-case class SavedPosition(x: Int, y: Int) derives ReadWriter
-case class SavePositionReq(userId: String, x: Int, y: Int) derives ReadWriter
+case class SavedPlayerData(x: Int, y: Int, points: Int) derives ReadWriter
+case class SavePlayerDataReq(userId: String, x: Int, y: Int, points: Int) derives ReadWriter
 
 object GameApi:
   private val apiBase = s"http://localhost:${sys.env.getOrElse("API_PORT", "8080")}"
   private val client  = HttpClient.newHttpClient()
 
-  def loadPosition(userId: String): IO[Option[(Int, Int)]] =
+  def loadPlayerData(userId: String): IO[Option[SavedPlayerData]] =
     if userId.isEmpty then IO.pure(None)
     else IO.blocking {
       val req = HttpRequest.newBuilder()
@@ -20,16 +20,14 @@ object GameApi:
         .GET()
         .build()
       val resp = client.send(req, HttpResponse.BodyHandlers.ofString())
-      if resp.statusCode() == 200 then
-        val pos = read[SavedPosition](resp.body())
-        Some((pos.x, pos.y))
+      if resp.statusCode() == 200 then Some(read[SavedPlayerData](resp.body()))
       else None
     }.handleError(_ => None)
 
-  def savePosition(userId: String, x: Int, y: Int): IO[Unit] =
+  def savePlayerData(userId: String, x: Int, y: Int, points: Int): IO[Unit] =
     if userId.isEmpty then IO.unit
     else IO.blocking {
-      val body = write(SavePositionReq(userId, x, y))
+      val body = write(SavePlayerDataReq(userId, x, y, points))
       val req = HttpRequest.newBuilder()
         .uri(URI.create(s"$apiBase/api/game/position"))
         .POST(HttpRequest.BodyPublishers.ofString(body))
