@@ -17,8 +17,11 @@ object ClientMsg:
   case class Join(name: String, clientId: String, userId: String) extends ClientMsg derives ReadWriter
   case class Move(dx: Int, dy: Int) extends ClientMsg derives ReadWriter
 
+case class FoodPos(x: Int, y: Int) derives ReadWriter
+
 case class ServerState(
   players: Map[String, Player],
+  food: List[FoodPos],
   gridW: Int,
   gridH: Int
 ) derives ReadWriter

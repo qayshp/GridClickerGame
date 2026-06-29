@@ -1113,6 +1113,7 @@ function $c_Lgame_client_Main$() {
   this.Lgame_client_Main$__f_MIN_CELL = 0;
   this.Lgame_client_Main$__f_cell = 0;
   this.Lgame_client_Main$__f_players = null;
+  this.Lgame_client_Main$__f_food = null;
   this.Lgame_client_Main$__f_myId = null;
   this.Lgame_client_Main$__f_ws = null;
   this.Lgame_client_Main$__f_connected = false;
@@ -1123,6 +1124,7 @@ function $c_Lgame_client_Main$() {
   this.Lgame_client_Main$__f_MIN_CELL = 8;
   this.Lgame_client_Main$__f_cell = this.Lgame_client_Main$__f_MAX_CELL;
   this.Lgame_client_Main$__f_players = $m_sci_Map$EmptyMap$();
+  this.Lgame_client_Main$__f_food = $m_sci_Nil$();
   this.Lgame_client_Main$__f_myId = "";
   this.Lgame_client_Main$__f_ws = null;
   this.Lgame_client_Main$__f_connected = false;
@@ -1226,6 +1228,7 @@ $c_Lgame_client_Main$.prototype.connectGame__T__T__Lorg_scalajs_dom_HTMLCanvasEl
     var evidence$3 = $m_Lgame_shared_ServerState$().derived$ReadWriter__Lupickle_core_Types$ReadWriter();
     var state = $as_Lgame_shared_ServerState($f_Lupickle_Api__read__Lujson_Readable__Z__Lupickle_core_Types$Reader__O(this$11, s$1, trace, evidence$3));
     this.Lgame_client_Main$__f_players = $n(state).Lgame_shared_ServerState__f_players;
+    this.Lgame_client_Main$__f_food = $n(state).Lgame_shared_ServerState__f_food;
     var this$12 = $n($n(this.Lgame_client_Main$__f_players).get__O__s_Option(this.Lgame_client_Main$__f_myId));
     if ((!this$12.isEmpty__Z())) {
       var arg1 = this$12.get__O();
@@ -1338,13 +1341,21 @@ $c_Lgame_client_Main$.prototype.renderFrame__Lorg_scalajs_dom_CanvasRenderingCon
       i$1 = ((1 + i$1) | 0);
     }
   }
-  var this$21 = $n(this.Lgame_client_Main$__f_players);
+  var this$21 = $n(this.Lgame_client_Main$__f_food);
+  var these = this$21;
+  while ((!$n(these).isEmpty__Z())) {
+    var arg1$2 = $n(these).head__O();
+    var f = $as_Lgame_shared_FoodPos(arg1$2);
+    $m_Lgame_client_Main$().drawFood__Lorg_scalajs_dom_CanvasRenderingContext2D__Lgame_shared_FoodPos__I__V(ctx, f, c);
+    these = $as_sci_List($n(these).tail__O());
+  }
+  var this$22 = $n(this.Lgame_client_Main$__f_players);
   var p$1 = new $c_sjsr_AnonFunction1(((x$1$1) => {
     var x$1$2 = $as_T2(x$1$1);
     return ((x$1$2 !== null) && ($as_Lgame_shared_Player($n(x$1$2).T2__f__2), true));
   }));
-  var this$22 = new $c_sc_MapOps$WithFilter(this$21, p$1);
-  var f = new $c_sjsr_AnonFunction1(((x$1$2$1) => {
+  var this$23 = new $c_sc_MapOps$WithFilter(this$22, p$1);
+  var f$1 = new $c_sjsr_AnonFunction1(((x$1$2$1) => {
     var x$1$3 = $as_T2(x$1$2$1);
     matchResult4: {
       if ((x$1$3 !== null)) {
@@ -1355,7 +1366,28 @@ $c_Lgame_client_Main$.prototype.renderFrame__Lorg_scalajs_dom_CanvasRenderingCon
       throw new $c_s_MatchError(x$1$3);
     }
   }));
-  $n(this$22.filtered__sc_Iterable()).foreach__F1__V(f);
+  $n(this$23.filtered__sc_Iterable()).foreach__F1__V(f$1);
+});
+$c_Lgame_client_Main$.prototype.drawFood__Lorg_scalajs_dom_CanvasRenderingContext2D__Lgame_shared_FoodPos__I__V = (function(ctx, f, c) {
+  var fx = Math.imul($n(f).Lgame_shared_FoodPos__f_x, c);
+  var fy = Math.imul($n(f).Lgame_shared_FoodPos__f_y, c);
+  var x = ((c / 3) | 0);
+  var size = ((x > 4) ? x : 4);
+  var off = ((((c - size) | 0) / 2) | 0);
+  ctx.save();
+  ctx.shadowColor = "#ffe84d";
+  ctx.shadowBlur = 12.0;
+  ctx.fillStyle = "#ffe84d";
+  var x$1 = ((fx + off) | 0);
+  var x$2 = ((fy + off) | 0);
+  ctx.fillRect(x$1, x$2, size, size);
+  var x$3 = ((size / 3) | 0);
+  var dot = ((x$3 > 1) ? x$3 : 1);
+  ctx.fillStyle = "#fff9c4";
+  var x$4 = ((((fx + off) | 0) + dot) | 0);
+  var x$5 = ((((fy + off) | 0) + dot) | 0);
+  ctx.fillRect(x$4, x$5, dot, dot);
+  ctx.restore();
 });
 $c_Lgame_client_Main$.prototype.drawPlayer__Lorg_scalajs_dom_CanvasRenderingContext2D__Lgame_shared_Player__Z__I__V = (function(ctx, p, isMe, c) {
   var px = Math.imul($n(p).Lgame_shared_Player__f_x, c);
@@ -15606,6 +15638,60 @@ function $m_Lgame_shared_ClientMsg$Move$() {
   return $n_Lgame_shared_ClientMsg$Move$;
 }
 /** @constructor */
+function $c_Lgame_shared_FoodPos$() {
+  this.Lgame_shared_FoodPos$__f_derived$ReadWriter$lzy5 = null;
+  this.Lgame_shared_FoodPos$__f_derived$ReadWriterbitmap$5 = false;
+}
+$c_Lgame_shared_FoodPos$.prototype = new $h_O();
+$c_Lgame_shared_FoodPos$.prototype.constructor = $c_Lgame_shared_FoodPos$;
+/** @constructor */
+function $h_Lgame_shared_FoodPos$() {
+}
+$h_Lgame_shared_FoodPos$.prototype = $c_Lgame_shared_FoodPos$.prototype;
+$c_Lgame_shared_FoodPos$.prototype.toString__T = (function() {
+  return "FoodPos";
+});
+$c_Lgame_shared_FoodPos$.prototype.derived$ReadWriter__Lupickle_core_Types$ReadWriter = (function() {
+  if ((!this.Lgame_shared_FoodPos$__f_derived$ReadWriterbitmap$5)) {
+    var this$1 = $m_Lupickle_default$();
+    var r = $m_Lupickle_default$().ReadWriter__Lupickle_core_Types$ReadWriter$();
+    new $c_Lupickle_implicits_MacroImplicits$ReadWriterExtension(this$1, r);
+    var MacroImplicits_this = $m_Lupickle_default$();
+    var x$1$proxy5 = $m_Lgame_shared_FoodPos$();
+    var $x_1 = MacroImplicits_this.ReadWriter__Lupickle_core_Types$ReadWriter$();
+    var reader = new $c_Lgame_shared_FoodPos$$anon$11(MacroImplicits_this, x$1$proxy5, this);
+    this.Lgame_shared_FoodPos$__f_derived$ReadWriter$lzy5 = $n($x_1).join__Lupickle_core_Types$Reader__Lupickle_core_Types$Writer__Lupickle_core_Types$ReadWriter(reader, new $c_Lgame_shared_FoodPos$$anon$12(MacroImplicits_this, this));
+    this.Lgame_shared_FoodPos$__f_derived$ReadWriterbitmap$5 = true;
+  }
+  return this.Lgame_shared_FoodPos$__f_derived$ReadWriter$lzy5;
+});
+$c_Lgame_shared_FoodPos$.prototype.fromProduct__s_Product__Lgame_shared_FoodPos = (function(x$0) {
+  return new $c_Lgame_shared_FoodPos($uI($n(x$0).productElement__I__O(0)), $uI($n(x$0).productElement__I__O(1)));
+});
+$c_Lgame_shared_FoodPos$.prototype.fromProduct__s_Product__O = (function(p) {
+  return this.fromProduct__s_Product__Lgame_shared_FoodPos(p);
+});
+$c_Lgame_shared_FoodPos$.prototype.game$shared$FoodPos$$$_$_$$anon$superArg$6$1__Lupickle_default$__Z = (function(ReadersVersionSpecific_this$23) {
+  var this$2 = $m_s_None$();
+  if ((!this$2.isEmpty__Z())) {
+    this$2.get__E();
+  }
+  $n(ReadersVersionSpecific_this$23);
+  return true;
+});
+var $d_Lgame_shared_FoodPos$ = new $TypeData().initClass($c_Lgame_shared_FoodPos$, "game.shared.FoodPos$", ({
+  Lgame_shared_FoodPos$: 1,
+  s_deriving_Mirror: 1,
+  s_deriving_Mirror$Product: 1
+}));
+var $n_Lgame_shared_FoodPos$;
+function $m_Lgame_shared_FoodPos$() {
+  if ((!$n_Lgame_shared_FoodPos$)) {
+    $n_Lgame_shared_FoodPos$ = new $c_Lgame_shared_FoodPos$();
+  }
+  return $n_Lgame_shared_FoodPos$;
+}
+/** @constructor */
 function $c_Lgame_shared_Player$() {
   this.Lgame_shared_Player$__f_derived$ReadWriter$lzy1 = null;
   this.Lgame_shared_Player$__f_derived$ReadWriterbitmap$1 = false;
@@ -15661,8 +15747,8 @@ function $m_Lgame_shared_Player$() {
 }
 /** @constructor */
 function $c_Lgame_shared_ServerState$() {
-  this.Lgame_shared_ServerState$__f_derived$ReadWriter$lzy5 = null;
-  this.Lgame_shared_ServerState$__f_derived$ReadWriterbitmap$5 = false;
+  this.Lgame_shared_ServerState$__f_derived$ReadWriter$lzy6 = null;
+  this.Lgame_shared_ServerState$__f_derived$ReadWriterbitmap$6 = false;
 }
 $c_Lgame_shared_ServerState$.prototype = new $h_O();
 $c_Lgame_shared_ServerState$.prototype.constructor = $c_Lgame_shared_ServerState$;
@@ -15674,31 +15760,31 @@ $c_Lgame_shared_ServerState$.prototype.toString__T = (function() {
   return "ServerState";
 });
 $c_Lgame_shared_ServerState$.prototype.derived$ReadWriter__Lupickle_core_Types$ReadWriter = (function() {
-  if ((!this.Lgame_shared_ServerState$__f_derived$ReadWriterbitmap$5)) {
+  if ((!this.Lgame_shared_ServerState$__f_derived$ReadWriterbitmap$6)) {
     var this$1 = $m_Lupickle_default$();
     var r = $m_Lupickle_default$().ReadWriter__Lupickle_core_Types$ReadWriter$();
     new $c_Lupickle_implicits_MacroImplicits$ReadWriterExtension(this$1, r);
     var MacroImplicits_this = $m_Lupickle_default$();
-    var x$1$proxy5 = $m_Lgame_shared_ServerState$();
+    var x$1$proxy6 = $m_Lgame_shared_ServerState$();
     var $x_1 = MacroImplicits_this.ReadWriter__Lupickle_core_Types$ReadWriter$();
-    var reader = new $c_Lgame_shared_ServerState$$anon$11(MacroImplicits_this, x$1$proxy5, this);
-    this.Lgame_shared_ServerState$__f_derived$ReadWriter$lzy5 = $n($x_1).join__Lupickle_core_Types$Reader__Lupickle_core_Types$Writer__Lupickle_core_Types$ReadWriter(reader, new $c_Lgame_shared_ServerState$$anon$12(MacroImplicits_this, this));
-    this.Lgame_shared_ServerState$__f_derived$ReadWriterbitmap$5 = true;
+    var reader = new $c_Lgame_shared_ServerState$$anon$13(MacroImplicits_this, x$1$proxy6, this);
+    this.Lgame_shared_ServerState$__f_derived$ReadWriter$lzy6 = $n($x_1).join__Lupickle_core_Types$Reader__Lupickle_core_Types$Writer__Lupickle_core_Types$ReadWriter(reader, new $c_Lgame_shared_ServerState$$anon$14(MacroImplicits_this, this));
+    this.Lgame_shared_ServerState$__f_derived$ReadWriterbitmap$6 = true;
   }
-  return this.Lgame_shared_ServerState$__f_derived$ReadWriter$lzy5;
+  return this.Lgame_shared_ServerState$__f_derived$ReadWriter$lzy6;
 });
 $c_Lgame_shared_ServerState$.prototype.fromProduct__s_Product__Lgame_shared_ServerState = (function(x$0) {
-  return new $c_Lgame_shared_ServerState($as_sci_Map($n(x$0).productElement__I__O(0)), $uI($n(x$0).productElement__I__O(1)), $uI($n(x$0).productElement__I__O(2)));
+  return new $c_Lgame_shared_ServerState($as_sci_Map($n(x$0).productElement__I__O(0)), $as_sci_List($n(x$0).productElement__I__O(1)), $uI($n(x$0).productElement__I__O(2)), $uI($n(x$0).productElement__I__O(3)));
 });
 $c_Lgame_shared_ServerState$.prototype.fromProduct__s_Product__O = (function(p) {
   return this.fromProduct__s_Product__Lgame_shared_ServerState(p);
 });
-$c_Lgame_shared_ServerState$.prototype.game$shared$ServerState$$$_$_$$anon$superArg$6$1__Lupickle_default$__Z = (function(ReadersVersionSpecific_this$23) {
+$c_Lgame_shared_ServerState$.prototype.game$shared$ServerState$$$_$_$$anon$superArg$7$1__Lupickle_default$__Z = (function(ReadersVersionSpecific_this$26) {
   var this$2 = $m_s_None$();
   if ((!this$2.isEmpty__Z())) {
     this$2.get__E();
   }
-  $n(ReadersVersionSpecific_this$23);
+  $n(ReadersVersionSpecific_this$26);
   return true;
 });
 var $d_Lgame_shared_ServerState$ = new $TypeData().initClass($c_Lgame_shared_ServerState$, "game.shared.ServerState$", ({
@@ -17398,6 +17484,25 @@ $c_sc_IterableFactory$Delegate.prototype.from__sc_IterableOnce__O = (function(it
 $c_sc_IterableFactory$Delegate.prototype.newBuilder__scm_Builder = (function() {
   return $n(this.sc_IterableFactory$Delegate__f_delegate).newBuilder__scm_Builder();
 });
+/** @constructor */
+function $c_sc_IterableFactory$ToFactory(factory) {
+  this.sc_IterableFactory$ToFactory__f_factory = null;
+  this.sc_IterableFactory$ToFactory__f_factory = factory;
+}
+$c_sc_IterableFactory$ToFactory.prototype = new $h_O();
+$c_sc_IterableFactory$ToFactory.prototype.constructor = $c_sc_IterableFactory$ToFactory;
+/** @constructor */
+function $h_sc_IterableFactory$ToFactory() {
+}
+$h_sc_IterableFactory$ToFactory.prototype = $c_sc_IterableFactory$ToFactory.prototype;
+$c_sc_IterableFactory$ToFactory.prototype.newBuilder__scm_Builder = (function() {
+  return $n(this.sc_IterableFactory$ToFactory__f_factory).newBuilder__scm_Builder();
+});
+var $d_sc_IterableFactory$ToFactory = new $TypeData().initClass($c_sc_IterableFactory$ToFactory, "scala.collection.IterableFactory$ToFactory", ({
+  sc_IterableFactory$ToFactory: 1,
+  sc_Factory: 1,
+  Ljava_io_Serializable: 1
+}));
 function $f_sc_IterableOps__sizeCompare__I__I($thiz, otherSize) {
   if ((otherSize < 0)) {
     return 1;
@@ -19638,6 +19743,52 @@ function $f_Lupickle_implicits_Generated__Tuple2Reader__Lupickle_core_Types$Read
   })));
 }
 /** @constructor */
+function $c_Lupickle_implicits_LowPriWriters$$anon$21(r$4, outer) {
+  this.Lupickle_implicits_LowPriWriters$$anon$21__f_r$2 = null;
+  this.Lupickle_implicits_LowPriWriters$$anon$21__f_r$2 = r$4;
+  if ((outer === null)) {
+    throw $ct_jl_NullPointerException__(new $c_jl_NullPointerException());
+  }
+}
+$c_Lupickle_implicits_LowPriWriters$$anon$21.prototype = new $h_O();
+$c_Lupickle_implicits_LowPriWriters$$anon$21.prototype.constructor = $c_Lupickle_implicits_LowPriWriters$$anon$21;
+/** @constructor */
+function $h_Lupickle_implicits_LowPriWriters$$anon$21() {
+}
+$h_Lupickle_implicits_LowPriWriters$$anon$21.prototype = $c_Lupickle_implicits_LowPriWriters$$anon$21.prototype;
+$c_Lupickle_implicits_LowPriWriters$$anon$21.prototype.isJsonDictKey__Z = (function() {
+  return false;
+});
+$c_Lupickle_implicits_LowPriWriters$$anon$21.prototype.narrow__Lupickle_core_Types$Writer = (function() {
+  return this;
+});
+$c_Lupickle_implicits_LowPriWriters$$anon$21.prototype.transform__O__Lupickle_core_Visitor__O = (function(v, out) {
+  return $f_Lupickle_core_Types$Writer__write__Lupickle_core_Visitor__O__O(this, out, v);
+});
+$c_Lupickle_implicits_LowPriWriters$$anon$21.prototype.write0__Lupickle_core_Visitor__sc_Iterable__O = (function(out, v) {
+  var ctx = $n($n(out).visitArray__I__I__Lupickle_core_ArrVisitor($n(v).size__I(), (-1)));
+  var x = $n(v).iterator__sc_Iterator();
+  while (true) {
+    var this$1 = $n(x);
+    if (this$1.hasNext__Z()) {
+      var next = $n(x).next__O();
+      var written = $f_Lupickle_core_Types$Writer__write__Lupickle_core_Visitor__O__O($n(this.Lupickle_implicits_LowPriWriters$$anon$21__f_r$2), ctx.subVisitor__Lupickle_core_Visitor(), next);
+      ctx.visitValue__O__I__V(written, (-1));
+    } else {
+      break;
+    }
+  }
+  return ctx.visitEnd__I__O((-1));
+});
+$c_Lupickle_implicits_LowPriWriters$$anon$21.prototype.write0__Lupickle_core_Visitor__O__O = (function(out, v) {
+  return this.write0__Lupickle_core_Visitor__sc_Iterable__O(out, $as_sc_Iterable(v));
+});
+var $d_Lupickle_implicits_LowPriWriters$$anon$21 = new $TypeData().initClass($c_Lupickle_implicits_LowPriWriters$$anon$21, "upickle.implicits.LowPriWriters$$anon$21", ({
+  Lupickle_implicits_LowPriWriters$$anon$21: 1,
+  Lupickle_core_Transformer: 1,
+  Lupickle_core_Types$Writer: 1
+}));
+/** @constructor */
 function $c_Lupickle_implicits_Readers$$anon$17$$anon$18(outer) {
   this.Lupickle_implicits_Readers$$anon$17$$anon$18__f_keys = null;
   this.Lupickle_implicits_Readers$$anon$17$$anon$18__f_values = null;
@@ -20173,6 +20324,79 @@ function $f_Lupickle_implicits_Writers$SimpleMapKeyWriter__write0__Lupickle_core
   return $n(out).visitString__jl_CharSequence__I__O($thiz.writeString__O__T(v), (-1));
 }
 /** @constructor */
+function $c_Lgame_shared_FoodPos(x, y) {
+  this.Lgame_shared_FoodPos__f_x = 0;
+  this.Lgame_shared_FoodPos__f_y = 0;
+  this.Lgame_shared_FoodPos__f_x = x;
+  this.Lgame_shared_FoodPos__f_y = y;
+}
+$c_Lgame_shared_FoodPos.prototype = new $h_O();
+$c_Lgame_shared_FoodPos.prototype.constructor = $c_Lgame_shared_FoodPos;
+/** @constructor */
+function $h_Lgame_shared_FoodPos() {
+}
+$h_Lgame_shared_FoodPos.prototype = $c_Lgame_shared_FoodPos.prototype;
+$c_Lgame_shared_FoodPos.prototype.productIterator__sc_Iterator = (function() {
+  return new $c_s_Product$$anon$1(this);
+});
+$c_Lgame_shared_FoodPos.prototype.hashCode__I = (function() {
+  var acc = (-889275714);
+  var hash = acc;
+  var data = $f_T__hashCode__I("FoodPos");
+  acc = $m_sr_Statics$().mix__I__I__I(hash, data);
+  var hash$1 = acc;
+  var data$1 = this.Lgame_shared_FoodPos__f_x;
+  acc = $m_sr_Statics$().mix__I__I__I(hash$1, data$1);
+  var hash$2 = acc;
+  var data$2 = this.Lgame_shared_FoodPos__f_y;
+  acc = $m_sr_Statics$().mix__I__I__I(hash$2, data$2);
+  var hash$3 = acc;
+  return $m_sr_Statics$().finalizeHash__I__I__I(hash$3, 2);
+});
+$c_Lgame_shared_FoodPos.prototype.equals__O__Z = (function(x$0) {
+  if ((this === x$0)) {
+    return true;
+  } else if ((x$0 instanceof $c_Lgame_shared_FoodPos)) {
+    var x$0$2 = $as_Lgame_shared_FoodPos(x$0);
+    return (((this.Lgame_shared_FoodPos__f_x === $n(x$0$2).Lgame_shared_FoodPos__f_x) && (this.Lgame_shared_FoodPos__f_y === $n(x$0$2).Lgame_shared_FoodPos__f_y)) && ($n(x$0$2), true));
+  } else {
+    return false;
+  }
+});
+$c_Lgame_shared_FoodPos.prototype.toString__T = (function() {
+  return $m_sr_ScalaRunTime$()._toString__s_Product__T(this);
+});
+$c_Lgame_shared_FoodPos.prototype.productArity__I = (function() {
+  return 2;
+});
+$c_Lgame_shared_FoodPos.prototype.productPrefix__T = (function() {
+  return "FoodPos";
+});
+$c_Lgame_shared_FoodPos.prototype.productElement__I__O = (function(n) {
+  if ((n === 0)) {
+    return this.Lgame_shared_FoodPos__f_x;
+  }
+  if ((n === 1)) {
+    return this.Lgame_shared_FoodPos__f_y;
+  }
+  throw $ct_jl_IndexOutOfBoundsException__T__(new $c_jl_IndexOutOfBoundsException(), ("" + n));
+});
+function $as_Lgame_shared_FoodPos(obj) {
+  return (((obj instanceof $c_Lgame_shared_FoodPos) || (obj === null)) ? obj : $throwClassCastException(obj, "game.shared.FoodPos"));
+}
+function $isArrayOf_Lgame_shared_FoodPos(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lgame_shared_FoodPos)));
+}
+function $asArrayOf_Lgame_shared_FoodPos(obj, depth) {
+  return (($isArrayOf_Lgame_shared_FoodPos(obj, depth) || (obj === null)) ? obj : $throwArrayCastException(obj, "Lgame.shared.FoodPos;", depth));
+}
+var $d_Lgame_shared_FoodPos = new $TypeData().initClass($c_Lgame_shared_FoodPos, "game.shared.FoodPos", ({
+  Lgame_shared_FoodPos: 1,
+  s_Equals: 1,
+  s_Product: 1,
+  Ljava_io_Serializable: 1
+}));
+/** @constructor */
 function $c_Lgame_shared_Player(id, x, y, color, name, online, points) {
   this.Lgame_shared_Player__f_id = null;
   this.Lgame_shared_Player__f_x = 0;
@@ -20300,11 +20524,13 @@ var $d_Lgame_shared_Player = new $TypeData().initClass($c_Lgame_shared_Player, "
   Ljava_io_Serializable: 1
 }));
 /** @constructor */
-function $c_Lgame_shared_ServerState(players, gridW, gridH) {
+function $c_Lgame_shared_ServerState(players, food, gridW, gridH) {
   this.Lgame_shared_ServerState__f_players = null;
+  this.Lgame_shared_ServerState__f_food = null;
   this.Lgame_shared_ServerState__f_gridW = 0;
   this.Lgame_shared_ServerState__f_gridH = 0;
   this.Lgame_shared_ServerState__f_players = players;
+  this.Lgame_shared_ServerState__f_food = food;
   this.Lgame_shared_ServerState__f_gridW = gridW;
   this.Lgame_shared_ServerState__f_gridH = gridH;
 }
@@ -20327,13 +20553,17 @@ $c_Lgame_shared_ServerState.prototype.hashCode__I = (function() {
   var data$1 = $m_sr_Statics$().anyHash__O__I(x);
   acc = $m_sr_Statics$().mix__I__I__I(hash$1, data$1);
   var hash$2 = acc;
-  var data$2 = this.Lgame_shared_ServerState__f_gridW;
+  var x$1 = this.Lgame_shared_ServerState__f_food;
+  var data$2 = $m_sr_Statics$().anyHash__O__I(x$1);
   acc = $m_sr_Statics$().mix__I__I__I(hash$2, data$2);
   var hash$3 = acc;
-  var data$3 = this.Lgame_shared_ServerState__f_gridH;
+  var data$3 = this.Lgame_shared_ServerState__f_gridW;
   acc = $m_sr_Statics$().mix__I__I__I(hash$3, data$3);
   var hash$4 = acc;
-  return $m_sr_Statics$().finalizeHash__I__I__I(hash$4, 3);
+  var data$4 = this.Lgame_shared_ServerState__f_gridH;
+  acc = $m_sr_Statics$().mix__I__I__I(hash$4, data$4);
+  var hash$5 = acc;
+  return $m_sr_Statics$().finalizeHash__I__I__I(hash$5, 4);
 });
 $c_Lgame_shared_ServerState.prototype.equals__O__Z = (function(x$0) {
   if ((this === x$0)) {
@@ -20343,7 +20573,14 @@ $c_Lgame_shared_ServerState.prototype.equals__O__Z = (function(x$0) {
     if (((this.Lgame_shared_ServerState__f_gridW === $n(x$0$2).Lgame_shared_ServerState__f_gridW) && (this.Lgame_shared_ServerState__f_gridH === $n(x$0$2).Lgame_shared_ServerState__f_gridH))) {
       var x = this.Lgame_shared_ServerState__f_players;
       var x$2 = $n(x$0$2).Lgame_shared_ServerState__f_players;
-      var $x_1 = ((x === null) ? (x$2 === null) : $n(x).equals__O__Z(x$2));
+      var $x_2 = ((x === null) ? (x$2 === null) : $n(x).equals__O__Z(x$2));
+    } else {
+      var $x_2 = false;
+    }
+    if ($x_2) {
+      var x$3 = this.Lgame_shared_ServerState__f_food;
+      var x$4 = $n(x$0$2).Lgame_shared_ServerState__f_food;
+      var $x_1 = ((x$3 === null) ? (x$4 === null) : $n(x$3).equals__O__Z(x$4));
     } else {
       var $x_1 = false;
     }
@@ -20361,7 +20598,7 @@ $c_Lgame_shared_ServerState.prototype.toString__T = (function() {
   return $m_sr_ScalaRunTime$()._toString__s_Product__T(this);
 });
 $c_Lgame_shared_ServerState.prototype.productArity__I = (function() {
-  return 3;
+  return 4;
 });
 $c_Lgame_shared_ServerState.prototype.productPrefix__T = (function() {
   return "ServerState";
@@ -20373,10 +20610,14 @@ $c_Lgame_shared_ServerState.prototype.productElement__I__O = (function(n) {
       break;
     }
     case 1: {
-      return this.Lgame_shared_ServerState__f_gridW;
+      return this.Lgame_shared_ServerState__f_food;
       break;
     }
     case 2: {
+      return this.Lgame_shared_ServerState__f_gridW;
+      break;
+    }
+    case 3: {
       return this.Lgame_shared_ServerState__f_gridH;
       break;
     }
@@ -25040,9 +25281,9 @@ var $d_Lupickle_implicits_Writers$JavaWriter = new $TypeData().initClass($c_Lupi
   Ljava_io_Serializable: 1
 }));
 /** @constructor */
-function $c_Lgame_shared_ClientMsg$$anon$10(WritersVersionSpecific_this$23, outer) {
+function $c_Lgame_shared_ClientMsg$$anon$10(WritersVersionSpecific_this$25, outer) {
   this.Lgame_shared_ClientMsg$$anon$10__f_WritersVersionSpecific_this$15 = null;
-  this.Lgame_shared_ClientMsg$$anon$10__f_WritersVersionSpecific_this$15 = WritersVersionSpecific_this$23;
+  this.Lgame_shared_ClientMsg$$anon$10__f_WritersVersionSpecific_this$15 = WritersVersionSpecific_this$25;
   if ((outer === null)) {
     throw $ct_jl_NullPointerException__(new $c_jl_NullPointerException());
   }
@@ -25120,9 +25361,9 @@ var $d_Lgame_shared_ClientMsg$$anon$10 = new $TypeData().initClass($c_Lgame_shar
   Lupickle_implicits_CaseClassReadWriters$CaseClassWriter: 1
 }));
 /** @constructor */
-function $c_Lgame_shared_ClientMsg$$anon$9(WritersVersionSpecific_this$22, outer) {
+function $c_Lgame_shared_ClientMsg$$anon$9(WritersVersionSpecific_this$24, outer) {
   this.Lgame_shared_ClientMsg$$anon$9__f_WritersVersionSpecific_this$11 = null;
-  this.Lgame_shared_ClientMsg$$anon$9__f_WritersVersionSpecific_this$11 = WritersVersionSpecific_this$22;
+  this.Lgame_shared_ClientMsg$$anon$9__f_WritersVersionSpecific_this$11 = WritersVersionSpecific_this$24;
   if ((outer === null)) {
     throw $ct_jl_NullPointerException__(new $c_jl_NullPointerException());
   }
@@ -25340,9 +25581,79 @@ var $d_Lgame_shared_ClientMsg$Move = new $TypeData().initClass($c_Lgame_shared_C
   Ljava_io_Serializable: 1
 }));
 /** @constructor */
-function $c_Lgame_shared_Player$$anon$2(WritersVersionSpecific_this$19, outer) {
+function $c_Lgame_shared_FoodPos$$anon$12(WritersVersionSpecific_this$26, outer) {
+  this.Lgame_shared_FoodPos$$anon$12__f_WritersVersionSpecific_this$18 = null;
+  this.Lgame_shared_FoodPos$$anon$12__f_WritersVersionSpecific_this$18 = WritersVersionSpecific_this$26;
+  if ((outer === null)) {
+    throw $ct_jl_NullPointerException__(new $c_jl_NullPointerException());
+  }
+}
+$c_Lgame_shared_FoodPos$$anon$12.prototype = new $h_O();
+$c_Lgame_shared_FoodPos$$anon$12.prototype.constructor = $c_Lgame_shared_FoodPos$$anon$12;
+/** @constructor */
+function $h_Lgame_shared_FoodPos$$anon$12() {
+}
+$h_Lgame_shared_FoodPos$$anon$12.prototype = $c_Lgame_shared_FoodPos$$anon$12.prototype;
+$c_Lgame_shared_FoodPos$$anon$12.prototype.isJsonDictKey__Z = (function() {
+  return false;
+});
+$c_Lgame_shared_FoodPos$$anon$12.prototype.narrow__Lupickle_core_Types$Writer = (function() {
+  return this;
+});
+$c_Lgame_shared_FoodPos$$anon$12.prototype.transform__O__Lupickle_core_Visitor__O = (function(v, out) {
+  return $f_Lupickle_core_Types$Writer__write__Lupickle_core_Visitor__O__O(this, out, v);
+});
+$c_Lgame_shared_FoodPos$$anon$12.prototype.write0__Lupickle_core_Visitor__Lgame_shared_FoodPos__O = (function(out, v) {
+  if ((v === null)) {
+    return $n(out).visitNull__I__O((-1));
+  } else {
+    var ctx = $n(out).visitObject__I__Z__I__Lupickle_core_ObjVisitor(2, true, (-1));
+    $n($n(this.Lgame_shared_FoodPos$$anon$12__f_WritersVersionSpecific_this$18).Lupickle_default$__f_outerThis);
+    var mappedArgsI = "x";
+    var w = $m_Lupickle_default$().Lupickle_default$__f_IntWriter;
+    var value = $n(v).Lgame_shared_FoodPos__f_x;
+    $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI, w, value);
+    $n($n(this.Lgame_shared_FoodPos$$anon$12__f_WritersVersionSpecific_this$18).Lupickle_default$__f_outerThis);
+    var mappedArgsI$1 = "y";
+    var w$1 = $m_Lupickle_default$().Lupickle_default$__f_IntWriter;
+    var value$1 = $n(v).Lgame_shared_FoodPos__f_y;
+    $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$1, w$1, value$1);
+    return $n(ctx).visitEnd__I__O((-1));
+  }
+});
+$c_Lgame_shared_FoodPos$$anon$12.prototype.writeToObject__Lupickle_core_ObjVisitor__Lgame_shared_FoodPos__V = (function(ctx, v) {
+  $n($n(this.Lgame_shared_FoodPos$$anon$12__f_WritersVersionSpecific_this$18).Lupickle_default$__f_outerThis);
+  var mappedArgsI = "x";
+  var w = $m_Lupickle_default$().Lupickle_default$__f_IntWriter;
+  var value = $n(v).Lgame_shared_FoodPos__f_x;
+  $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI, w, value);
+  $n($n(this.Lgame_shared_FoodPos$$anon$12__f_WritersVersionSpecific_this$18).Lupickle_default$__f_outerThis);
+  var mappedArgsI$1 = "y";
+  var w$1 = $m_Lupickle_default$().Lupickle_default$__f_IntWriter;
+  var value$1 = $n(v).Lgame_shared_FoodPos__f_y;
+  $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$1, w$1, value$1);
+});
+$c_Lgame_shared_FoodPos$$anon$12.prototype.length__O__I = (function(v) {
+  $as_Lgame_shared_FoodPos(v);
+  return 2;
+});
+$c_Lgame_shared_FoodPos$$anon$12.prototype.write0__Lupickle_core_Visitor__O__O = (function(out, v) {
+  return this.write0__Lupickle_core_Visitor__Lgame_shared_FoodPos__O(out, $as_Lgame_shared_FoodPos(v));
+});
+$c_Lgame_shared_FoodPos$$anon$12.prototype.writeToObject__Lupickle_core_ObjVisitor__O__V = (function(ctx, v) {
+  this.writeToObject__Lupickle_core_ObjVisitor__Lgame_shared_FoodPos__V(ctx, $as_Lgame_shared_FoodPos(v));
+});
+var $d_Lgame_shared_FoodPos$$anon$12 = new $TypeData().initClass($c_Lgame_shared_FoodPos$$anon$12, "game.shared.FoodPos$$anon$12", ({
+  Lgame_shared_FoodPos$$anon$12: 1,
+  Lupickle_core_Transformer: 1,
+  Lupickle_core_Types$Writer: 1,
+  Lupickle_core_Types$ObjectWriter: 1,
+  Lupickle_implicits_CaseClassReadWriters$CaseClassWriter: 1
+}));
+/** @constructor */
+function $c_Lgame_shared_Player$$anon$2(WritersVersionSpecific_this$21, outer) {
   this.Lgame_shared_Player$$anon$2__f_WritersVersionSpecific_this$2 = null;
-  this.Lgame_shared_Player$$anon$2__f_WritersVersionSpecific_this$2 = WritersVersionSpecific_this$19;
+  this.Lgame_shared_Player$$anon$2__f_WritersVersionSpecific_this$2 = WritersVersionSpecific_this$21;
   if ((outer === null)) {
     throw $ct_jl_NullPointerException__(new $c_jl_NullPointerException());
   }
@@ -25460,34 +25771,34 @@ var $d_Lgame_shared_Player$$anon$2 = new $TypeData().initClass($c_Lgame_shared_P
   Lupickle_implicits_CaseClassReadWriters$CaseClassWriter: 1
 }));
 /** @constructor */
-function $c_Lgame_shared_ServerState$$anon$12(WritersVersionSpecific_this$24, outer) {
-  this.Lgame_shared_ServerState$$anon$12__f_WritersVersionSpecific_this$18 = null;
-  this.Lgame_shared_ServerState$$anon$12__f_WritersVersionSpecific_this$18 = WritersVersionSpecific_this$24;
+function $c_Lgame_shared_ServerState$$anon$14(WritersVersionSpecific_this$27, outer) {
+  this.Lgame_shared_ServerState$$anon$14__f_WritersVersionSpecific_this$20 = null;
+  this.Lgame_shared_ServerState$$anon$14__f_WritersVersionSpecific_this$20 = WritersVersionSpecific_this$27;
   if ((outer === null)) {
     throw $ct_jl_NullPointerException__(new $c_jl_NullPointerException());
   }
 }
-$c_Lgame_shared_ServerState$$anon$12.prototype = new $h_O();
-$c_Lgame_shared_ServerState$$anon$12.prototype.constructor = $c_Lgame_shared_ServerState$$anon$12;
+$c_Lgame_shared_ServerState$$anon$14.prototype = new $h_O();
+$c_Lgame_shared_ServerState$$anon$14.prototype.constructor = $c_Lgame_shared_ServerState$$anon$14;
 /** @constructor */
-function $h_Lgame_shared_ServerState$$anon$12() {
+function $h_Lgame_shared_ServerState$$anon$14() {
 }
-$h_Lgame_shared_ServerState$$anon$12.prototype = $c_Lgame_shared_ServerState$$anon$12.prototype;
-$c_Lgame_shared_ServerState$$anon$12.prototype.isJsonDictKey__Z = (function() {
+$h_Lgame_shared_ServerState$$anon$14.prototype = $c_Lgame_shared_ServerState$$anon$14.prototype;
+$c_Lgame_shared_ServerState$$anon$14.prototype.isJsonDictKey__Z = (function() {
   return false;
 });
-$c_Lgame_shared_ServerState$$anon$12.prototype.narrow__Lupickle_core_Types$Writer = (function() {
+$c_Lgame_shared_ServerState$$anon$14.prototype.narrow__Lupickle_core_Types$Writer = (function() {
   return this;
 });
-$c_Lgame_shared_ServerState$$anon$12.prototype.transform__O__Lupickle_core_Visitor__O = (function(v, out) {
+$c_Lgame_shared_ServerState$$anon$14.prototype.transform__O__Lupickle_core_Visitor__O = (function(v, out) {
   return $f_Lupickle_core_Types$Writer__write__Lupickle_core_Visitor__O__O(this, out, v);
 });
-$c_Lgame_shared_ServerState$$anon$12.prototype.write0__Lupickle_core_Visitor__Lgame_shared_ServerState__O = (function(out, v) {
+$c_Lgame_shared_ServerState$$anon$14.prototype.write0__Lupickle_core_Visitor__Lgame_shared_ServerState__O = (function(out, v) {
   if ((v === null)) {
     return $n(out).visitNull__I__O((-1));
   } else {
-    var ctx = $n(out).visitObject__I__Z__I__Lupickle_core_ObjVisitor(3, true, (-1));
-    $n($n(this.Lgame_shared_ServerState$$anon$12__f_WritersVersionSpecific_this$18).Lupickle_default$__f_outerThis);
+    var ctx = $n(out).visitObject__I__Z__I__Lupickle_core_ObjVisitor(4, true, (-1));
+    $n($n(this.Lgame_shared_ServerState$$anon$14__f_WritersVersionSpecific_this$20).Lupickle_default$__f_outerThis);
     var mappedArgsI = "players";
     var this$2 = $m_Lupickle_default$();
     var evidence$5 = $m_Lupickle_default$().Lupickle_default$__f_StringWriter;
@@ -25495,21 +25806,28 @@ $c_Lgame_shared_ServerState$$anon$12.prototype.write0__Lupickle_core_Visitor__Lg
     var w = new $c_Lupickle_implicits_Writers$$anon$19(evidence$5, evidence$6, this$2);
     var value = $n(v).Lgame_shared_ServerState__f_players;
     $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI, w, value);
-    $n($n(this.Lgame_shared_ServerState$$anon$12__f_WritersVersionSpecific_this$18).Lupickle_default$__f_outerThis);
-    var mappedArgsI$1 = "gridW";
-    var w$1 = $m_Lupickle_default$().Lupickle_default$__f_IntWriter;
-    var value$1 = $n(v).Lgame_shared_ServerState__f_gridW;
+    $n($n(this.Lgame_shared_ServerState$$anon$14__f_WritersVersionSpecific_this$20).Lupickle_default$__f_outerThis);
+    var mappedArgsI$1 = "food";
+    var this$4 = $m_Lupickle_default$();
+    var r = $m_Lgame_shared_FoodPos$().derived$ReadWriter__Lupickle_core_Types$ReadWriter();
+    var w$1 = new $c_Lupickle_implicits_LowPriWriters$$anon$21(r, this$4);
+    var value$1 = $n(v).Lgame_shared_ServerState__f_food;
     $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$1, w$1, value$1);
-    $n($n(this.Lgame_shared_ServerState$$anon$12__f_WritersVersionSpecific_this$18).Lupickle_default$__f_outerThis);
-    var mappedArgsI$2 = "gridH";
+    $n($n(this.Lgame_shared_ServerState$$anon$14__f_WritersVersionSpecific_this$20).Lupickle_default$__f_outerThis);
+    var mappedArgsI$2 = "gridW";
     var w$2 = $m_Lupickle_default$().Lupickle_default$__f_IntWriter;
-    var value$2 = $n(v).Lgame_shared_ServerState__f_gridH;
+    var value$2 = $n(v).Lgame_shared_ServerState__f_gridW;
     $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$2, w$2, value$2);
+    $n($n(this.Lgame_shared_ServerState$$anon$14__f_WritersVersionSpecific_this$20).Lupickle_default$__f_outerThis);
+    var mappedArgsI$3 = "gridH";
+    var w$3 = $m_Lupickle_default$().Lupickle_default$__f_IntWriter;
+    var value$3 = $n(v).Lgame_shared_ServerState__f_gridH;
+    $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$3, w$3, value$3);
     return $n(ctx).visitEnd__I__O((-1));
   }
 });
-$c_Lgame_shared_ServerState$$anon$12.prototype.writeToObject__Lupickle_core_ObjVisitor__Lgame_shared_ServerState__V = (function(ctx, v) {
-  $n($n(this.Lgame_shared_ServerState$$anon$12__f_WritersVersionSpecific_this$18).Lupickle_default$__f_outerThis);
+$c_Lgame_shared_ServerState$$anon$14.prototype.writeToObject__Lupickle_core_ObjVisitor__Lgame_shared_ServerState__V = (function(ctx, v) {
+  $n($n(this.Lgame_shared_ServerState$$anon$14__f_WritersVersionSpecific_this$20).Lupickle_default$__f_outerThis);
   var mappedArgsI = "players";
   var this$2 = $m_Lupickle_default$();
   var evidence$5 = $m_Lupickle_default$().Lupickle_default$__f_StringWriter;
@@ -25517,29 +25835,36 @@ $c_Lgame_shared_ServerState$$anon$12.prototype.writeToObject__Lupickle_core_ObjV
   var w = new $c_Lupickle_implicits_Writers$$anon$19(evidence$5, evidence$6, this$2);
   var value = $n(v).Lgame_shared_ServerState__f_players;
   $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI, w, value);
-  $n($n(this.Lgame_shared_ServerState$$anon$12__f_WritersVersionSpecific_this$18).Lupickle_default$__f_outerThis);
-  var mappedArgsI$1 = "gridW";
-  var w$1 = $m_Lupickle_default$().Lupickle_default$__f_IntWriter;
-  var value$1 = $n(v).Lgame_shared_ServerState__f_gridW;
+  $n($n(this.Lgame_shared_ServerState$$anon$14__f_WritersVersionSpecific_this$20).Lupickle_default$__f_outerThis);
+  var mappedArgsI$1 = "food";
+  var this$4 = $m_Lupickle_default$();
+  var r = $m_Lgame_shared_FoodPos$().derived$ReadWriter__Lupickle_core_Types$ReadWriter();
+  var w$1 = new $c_Lupickle_implicits_LowPriWriters$$anon$21(r, this$4);
+  var value$1 = $n(v).Lgame_shared_ServerState__f_food;
   $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$1, w$1, value$1);
-  $n($n(this.Lgame_shared_ServerState$$anon$12__f_WritersVersionSpecific_this$18).Lupickle_default$__f_outerThis);
-  var mappedArgsI$2 = "gridH";
+  $n($n(this.Lgame_shared_ServerState$$anon$14__f_WritersVersionSpecific_this$20).Lupickle_default$__f_outerThis);
+  var mappedArgsI$2 = "gridW";
   var w$2 = $m_Lupickle_default$().Lupickle_default$__f_IntWriter;
-  var value$2 = $n(v).Lgame_shared_ServerState__f_gridH;
+  var value$2 = $n(v).Lgame_shared_ServerState__f_gridW;
   $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$2, w$2, value$2);
+  $n($n(this.Lgame_shared_ServerState$$anon$14__f_WritersVersionSpecific_this$20).Lupickle_default$__f_outerThis);
+  var mappedArgsI$3 = "gridH";
+  var w$3 = $m_Lupickle_default$().Lupickle_default$__f_IntWriter;
+  var value$3 = $n(v).Lgame_shared_ServerState__f_gridH;
+  $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$3, w$3, value$3);
 });
-$c_Lgame_shared_ServerState$$anon$12.prototype.length__O__I = (function(v) {
+$c_Lgame_shared_ServerState$$anon$14.prototype.length__O__I = (function(v) {
   $as_Lgame_shared_ServerState(v);
-  return 3;
+  return 4;
 });
-$c_Lgame_shared_ServerState$$anon$12.prototype.write0__Lupickle_core_Visitor__O__O = (function(out, v) {
+$c_Lgame_shared_ServerState$$anon$14.prototype.write0__Lupickle_core_Visitor__O__O = (function(out, v) {
   return this.write0__Lupickle_core_Visitor__Lgame_shared_ServerState__O(out, $as_Lgame_shared_ServerState(v));
 });
-$c_Lgame_shared_ServerState$$anon$12.prototype.writeToObject__Lupickle_core_ObjVisitor__O__V = (function(ctx, v) {
+$c_Lgame_shared_ServerState$$anon$14.prototype.writeToObject__Lupickle_core_ObjVisitor__O__V = (function(ctx, v) {
   this.writeToObject__Lupickle_core_ObjVisitor__Lgame_shared_ServerState__V(ctx, $as_Lgame_shared_ServerState(v));
 });
-var $d_Lgame_shared_ServerState$$anon$12 = new $TypeData().initClass($c_Lgame_shared_ServerState$$anon$12, "game.shared.ServerState$$anon$12", ({
-  Lgame_shared_ServerState$$anon$12: 1,
+var $d_Lgame_shared_ServerState$$anon$14 = new $TypeData().initClass($c_Lgame_shared_ServerState$$anon$14, "game.shared.ServerState$$anon$14", ({
+  Lgame_shared_ServerState$$anon$14: 1,
   Lupickle_core_Transformer: 1,
   Lupickle_core_Types$Writer: 1,
   Lupickle_core_Types$ObjectWriter: 1,
@@ -34906,6 +35231,9 @@ $c_sc_AbstractIterable.prototype.forall__F1__Z = (function(p) {
 $c_sc_AbstractIterable.prototype.isEmpty__Z = (function() {
   return $f_sc_IterableOnceOps__isEmpty__Z(this);
 });
+$c_sc_AbstractIterable.prototype.size__I = (function() {
+  return $f_sc_IterableOnceOps__size__I(this);
+});
 $c_sc_AbstractIterable.prototype.copyToArray__O__I__I__I = (function(xs, start, len) {
   return $f_sc_IterableOnceOps__copyToArray__O__I__I__I(this, xs, start, len);
 });
@@ -37814,6 +38142,99 @@ var $d_Lgame_shared_ClientMsg$$anon$8 = new $TypeData().initClass($c_Lgame_share
   Lupickle_core_Types$SimpleReader: 1
 }));
 /** @constructor */
+function $c_Lgame_shared_FoodPos$$anon$11(ReadersVersionSpecific_this$22, m$11, outer) {
+  this.Lupickle_implicits_CaseClassReadWriters$CaseClassReader__f_$outer = null;
+  this.Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__f_upickle$implicits$ReadersVersionSpecific$CaseClassReadereader$$paramCount = 0;
+  this.Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__f_upickle$implicits$ReadersVersionSpecific$CaseClassReadereader$$missingKeyCount = $L0;
+  this.Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__f_upickle$implicits$ReadersVersionSpecific$CaseClassReadereader$$allowUnknownKeys = false;
+  this.Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__f_visitors$lzy1 = null;
+  this.Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__f_visitorsbitmap$1 = false;
+  this.Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__f_$outer = null;
+  this.Lgame_shared_FoodPos$$anon$11__f_m$12 = null;
+  this.Lgame_shared_FoodPos$$anon$11__f_m$12 = m$11;
+  if ((outer === null)) {
+    throw $ct_jl_NullPointerException__(new $c_jl_NullPointerException());
+  }
+  $ct_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__Lupickle_implicits_ReadersVersionSpecific__I__J__Z__(this, ReadersVersionSpecific_this$22, 2, new $c_RTLong(3, 0), $m_Lgame_shared_FoodPos$().game$shared$FoodPos$$$_$_$$anon$superArg$6$1__Lupickle_default$__Z(ReadersVersionSpecific_this$22));
+}
+$c_Lgame_shared_FoodPos$$anon$11.prototype = new $h_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader();
+$c_Lgame_shared_FoodPos$$anon$11.prototype.constructor = $c_Lgame_shared_FoodPos$$anon$11;
+/** @constructor */
+function $h_Lgame_shared_FoodPos$$anon$11() {
+}
+$h_Lgame_shared_FoodPos$$anon$11.prototype = $c_Lgame_shared_FoodPos$$anon$11.prototype;
+$c_Lgame_shared_FoodPos$$anon$11.prototype.visitors0__s_Product = (function() {
+  var x$2 = $m_Lupickle_default$().Lupickle_default$__f_IntReader;
+  var x$2$2 = $m_Lupickle_default$().Lupickle_default$__f_IntReader;
+  var Tuple_this = $m_T$package$EmptyTuple$();
+  var res = $as_T1($m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$2, Tuple_this));
+  var res$2 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2, res);
+  return res$2;
+});
+$c_Lgame_shared_FoodPos$$anon$11.prototype.fromProduct__s_Product__Lgame_shared_FoodPos = (function(p) {
+  return $as_Lgame_shared_FoodPos($n(this.Lgame_shared_FoodPos$$anon$11__f_m$12).fromProduct__s_Product__O(p));
+});
+$c_Lgame_shared_FoodPos$$anon$11.prototype.keyToIndex__T__I = (function(x) {
+  return ((x === "x") ? 0 : ((x === "y") ? 1 : (-1)));
+});
+$c_Lgame_shared_FoodPos$$anon$11.prototype.allKeysArray__AT = (function() {
+  var this$3 = new $c_sci_$colon$colon(new $c_T2("x", "x"), new $c_sci_$colon$colon(new $c_T2("y", "y"), $m_sci_Nil$()));
+  var f = ((_$1) => {
+    var _$1$1 = $as_T2(_$1);
+    return $as_T($n(_$1$1).T2__f__2);
+  });
+  if ((this$3 === $m_sci_Nil$())) {
+    var this$5 = $m_sci_Nil$();
+  } else {
+    var arg1 = this$3.sci_$colon$colon__f_head;
+    var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
+    var t = h;
+    var rest = this$3.sci_$colon$colon__f_next;
+    while ((rest !== $m_sci_Nil$())) {
+      var arg1$1 = $n(rest).head__O();
+      var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
+      $n(t).sci_$colon$colon__f_next = nx;
+      t = nx;
+      rest = $as_sci_List($n(rest).tail__O());
+    }
+    var this$5 = h;
+  }
+  if ((this$5.knownSize__I() >= 0)) {
+    var len = this$5.knownSize__I();
+    var destination = new ($d_T.getArrayOf().constr)(len);
+    $f_sc_IterableOnceOps__copyToArray__O__I__I__I(this$5, destination, 0, 2147483647);
+    return destination;
+  } else {
+    var capacity = 0;
+    var size = 0;
+    var jsElems = null;
+    capacity = 0;
+    size = 0;
+    jsElems = [];
+    var it = this$5.iterator__sc_Iterator();
+    while ($n(it).hasNext__Z()) {
+      var elem = $n(it).next__O();
+      var unboxedElem = ((elem === null) ? null : elem);
+      jsElems.push(unboxedElem);
+    }
+    return new ($d_T.getArrayOf().constr)(jsElems);
+  }
+});
+$c_Lgame_shared_FoodPos$$anon$11.prototype.storeDefaults__Lupickle_implicits_BaseCaseObjectContext__V = (function(x) {
+});
+$c_Lgame_shared_FoodPos$$anon$11.prototype.fromProduct__s_Product__O = (function(p) {
+  return this.fromProduct__s_Product__Lgame_shared_FoodPos(p);
+});
+var $d_Lgame_shared_FoodPos$$anon$11 = new $TypeData().initClass($c_Lgame_shared_FoodPos$$anon$11, "game.shared.FoodPos$$anon$11", ({
+  Lgame_shared_FoodPos$$anon$11: 1,
+  Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader: 1,
+  Lupickle_implicits_CaseClassReadWriters$CaseClassReader: 1,
+  Lupickle_core_Visitor: 1,
+  Lupickle_core_Types$Reader: 1,
+  Lupickle_core_SimpleVisitor: 1,
+  Lupickle_core_Types$SimpleReader: 1
+}));
+/** @constructor */
 function $c_Lgame_shared_Player$$anon$1(ReadersVersionSpecific_this$1, m$1, outer) {
   this.Lupickle_implicits_CaseClassReadWriters$CaseClassReader__f_$outer = null;
   this.Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__f_upickle$implicits$ReadersVersionSpecific$CaseClassReadereader$$paramCount = 0;
@@ -37949,7 +38370,7 @@ var $d_Lgame_shared_Player$$anon$1 = new $TypeData().initClass($c_Lgame_shared_P
   Lupickle_core_Types$SimpleReader: 1
 }));
 /** @constructor */
-function $c_Lgame_shared_ServerState$$anon$11(ReadersVersionSpecific_this$22, m$11, outer) {
+function $c_Lgame_shared_ServerState$$anon$13(ReadersVersionSpecific_this$25, m$13, outer) {
   this.Lupickle_implicits_CaseClassReadWriters$CaseClassReader__f_$outer = null;
   this.Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__f_upickle$implicits$ReadersVersionSpecific$CaseClassReadereader$$paramCount = 0;
   this.Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__f_upickle$implicits$ReadersVersionSpecific$CaseClassReadereader$$missingKeyCount = $L0;
@@ -37957,47 +38378,57 @@ function $c_Lgame_shared_ServerState$$anon$11(ReadersVersionSpecific_this$22, m$
   this.Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__f_visitors$lzy1 = null;
   this.Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__f_visitorsbitmap$1 = false;
   this.Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__f_$outer = null;
-  this.Lgame_shared_ServerState$$anon$11__f_m$12 = null;
-  this.Lgame_shared_ServerState$$anon$11__f_m$12 = m$11;
+  this.Lgame_shared_ServerState$$anon$13__f_m$14 = null;
+  this.Lgame_shared_ServerState$$anon$13__f_m$14 = m$13;
   if ((outer === null)) {
     throw $ct_jl_NullPointerException__(new $c_jl_NullPointerException());
   }
-  $ct_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__Lupickle_implicits_ReadersVersionSpecific__I__J__Z__(this, ReadersVersionSpecific_this$22, 3, new $c_RTLong(7, 0), $m_Lgame_shared_ServerState$().game$shared$ServerState$$$_$_$$anon$superArg$6$1__Lupickle_default$__Z(ReadersVersionSpecific_this$22));
+  $ct_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__Lupickle_implicits_ReadersVersionSpecific__I__J__Z__(this, ReadersVersionSpecific_this$25, 4, new $c_RTLong(15, 0), $m_Lgame_shared_ServerState$().game$shared$ServerState$$$_$_$$anon$superArg$7$1__Lupickle_default$__Z(ReadersVersionSpecific_this$25));
 }
-$c_Lgame_shared_ServerState$$anon$11.prototype = new $h_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader();
-$c_Lgame_shared_ServerState$$anon$11.prototype.constructor = $c_Lgame_shared_ServerState$$anon$11;
+$c_Lgame_shared_ServerState$$anon$13.prototype = new $h_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader();
+$c_Lgame_shared_ServerState$$anon$13.prototype.constructor = $c_Lgame_shared_ServerState$$anon$13;
 /** @constructor */
-function $h_Lgame_shared_ServerState$$anon$11() {
+function $h_Lgame_shared_ServerState$$anon$13() {
 }
-$h_Lgame_shared_ServerState$$anon$11.prototype = $c_Lgame_shared_ServerState$$anon$11.prototype;
-$c_Lgame_shared_ServerState$$anon$11.prototype.visitors0__s_Product = (function() {
+$h_Lgame_shared_ServerState$$anon$13.prototype = $c_Lgame_shared_ServerState$$anon$13.prototype;
+$c_Lgame_shared_ServerState$$anon$13.prototype.visitors0__s_Product = (function() {
   var this$1 = $m_Lupickle_default$();
   var evidence$3 = $m_Lupickle_default$().Lupickle_default$__f_StringReader;
   var evidence$4 = $m_Lgame_shared_Player$().derived$ReadWriter__Lupickle_core_Types$ReadWriter();
   var x$2 = $f_Lupickle_implicits_Readers__MapReader2__Lupickle_core_Types$Reader__Lupickle_core_Types$Reader__Lupickle_core_Types$Reader(this$1, evidence$3, evidence$4);
-  var x$2$2 = $m_Lupickle_default$().Lupickle_default$__f_IntReader;
+  var this$4 = $m_Lupickle_default$();
+  var r = $m_Lgame_shared_FoodPos$().derived$ReadWriter__Lupickle_core_Types$ReadWriter();
+  var this$2 = $m_sci_List$();
+  var factory = new $c_sc_IterableFactory$ToFactory(this$2);
+  var x$2$2 = new $c_Lupickle_implicits_Readers$SeqLikeReader(this$4, r, factory);
   var x$2$3 = $m_Lupickle_default$().Lupickle_default$__f_IntReader;
+  var x$2$4 = $m_Lupickle_default$().Lupickle_default$__f_IntReader;
   var Tuple_this = $m_T$package$EmptyTuple$();
-  var res = $as_T1($m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$3, Tuple_this));
-  var res$2 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$2, res);
-  var res$3 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2, res$2);
-  return res$3;
+  var res = $as_T1($m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$4, Tuple_this));
+  var res$2 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$3, res);
+  var res$3 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$2, res$2);
+  var res$4 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2, res$3);
+  return res$4;
 });
-$c_Lgame_shared_ServerState$$anon$11.prototype.fromProduct__s_Product__Lgame_shared_ServerState = (function(p) {
-  return $as_Lgame_shared_ServerState($n(this.Lgame_shared_ServerState$$anon$11__f_m$12).fromProduct__s_Product__O(p));
+$c_Lgame_shared_ServerState$$anon$13.prototype.fromProduct__s_Product__Lgame_shared_ServerState = (function(p) {
+  return $as_Lgame_shared_ServerState($n(this.Lgame_shared_ServerState$$anon$13__f_m$14).fromProduct__s_Product__O(p));
 });
-$c_Lgame_shared_ServerState$$anon$11.prototype.keyToIndex__T__I = (function(x) {
+$c_Lgame_shared_ServerState$$anon$13.prototype.keyToIndex__T__I = (function(x) {
   switch (x) {
     case "players": {
       return 0;
       break;
     }
-    case "gridW": {
+    case "food": {
       return 1;
       break;
     }
-    case "gridH": {
+    case "gridW": {
       return 2;
+      break;
+    }
+    case "gridH": {
+      return 3;
       break;
     }
     default: {
@@ -38005,19 +38436,19 @@ $c_Lgame_shared_ServerState$$anon$11.prototype.keyToIndex__T__I = (function(x) {
     }
   }
 });
-$c_Lgame_shared_ServerState$$anon$11.prototype.allKeysArray__AT = (function() {
-  var this$4 = new $c_sci_$colon$colon(new $c_T2("players", "players"), new $c_sci_$colon$colon(new $c_T2("gridW", "gridW"), new $c_sci_$colon$colon(new $c_T2("gridH", "gridH"), $m_sci_Nil$())));
+$c_Lgame_shared_ServerState$$anon$13.prototype.allKeysArray__AT = (function() {
+  var this$5 = new $c_sci_$colon$colon(new $c_T2("players", "players"), new $c_sci_$colon$colon(new $c_T2("food", "food"), new $c_sci_$colon$colon(new $c_T2("gridW", "gridW"), new $c_sci_$colon$colon(new $c_T2("gridH", "gridH"), $m_sci_Nil$()))));
   var f = ((_$1) => {
     var _$1$1 = $as_T2(_$1);
     return $as_T($n(_$1$1).T2__f__2);
   });
-  if ((this$4 === $m_sci_Nil$())) {
-    var this$6 = $m_sci_Nil$();
+  if ((this$5 === $m_sci_Nil$())) {
+    var this$7 = $m_sci_Nil$();
   } else {
-    var arg1 = this$4.sci_$colon$colon__f_head;
+    var arg1 = this$5.sci_$colon$colon__f_head;
     var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
     var t = h;
-    var rest = this$4.sci_$colon$colon__f_next;
+    var rest = this$5.sci_$colon$colon__f_next;
     while ((rest !== $m_sci_Nil$())) {
       var arg1$1 = $n(rest).head__O();
       var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
@@ -38025,12 +38456,12 @@ $c_Lgame_shared_ServerState$$anon$11.prototype.allKeysArray__AT = (function() {
       t = nx;
       rest = $as_sci_List($n(rest).tail__O());
     }
-    var this$6 = h;
+    var this$7 = h;
   }
-  if ((this$6.knownSize__I() >= 0)) {
-    var len = this$6.knownSize__I();
+  if ((this$7.knownSize__I() >= 0)) {
+    var len = this$7.knownSize__I();
     var destination = new ($d_T.getArrayOf().constr)(len);
-    $f_sc_IterableOnceOps__copyToArray__O__I__I__I(this$6, destination, 0, 2147483647);
+    $f_sc_IterableOnceOps__copyToArray__O__I__I__I(this$7, destination, 0, 2147483647);
     return destination;
   } else {
     var capacity = 0;
@@ -38039,7 +38470,7 @@ $c_Lgame_shared_ServerState$$anon$11.prototype.allKeysArray__AT = (function() {
     capacity = 0;
     size = 0;
     jsElems = [];
-    var it = this$6.iterator__sc_Iterator();
+    var it = this$7.iterator__sc_Iterator();
     while ($n(it).hasNext__Z()) {
       var elem = $n(it).next__O();
       var unboxedElem = ((elem === null) ? null : elem);
@@ -38048,13 +38479,13 @@ $c_Lgame_shared_ServerState$$anon$11.prototype.allKeysArray__AT = (function() {
     return new ($d_T.getArrayOf().constr)(jsElems);
   }
 });
-$c_Lgame_shared_ServerState$$anon$11.prototype.storeDefaults__Lupickle_implicits_BaseCaseObjectContext__V = (function(x) {
+$c_Lgame_shared_ServerState$$anon$13.prototype.storeDefaults__Lupickle_implicits_BaseCaseObjectContext__V = (function(x) {
 });
-$c_Lgame_shared_ServerState$$anon$11.prototype.fromProduct__s_Product__O = (function(p) {
+$c_Lgame_shared_ServerState$$anon$13.prototype.fromProduct__s_Product__O = (function(p) {
   return this.fromProduct__s_Product__Lgame_shared_ServerState(p);
 });
-var $d_Lgame_shared_ServerState$$anon$11 = new $TypeData().initClass($c_Lgame_shared_ServerState$$anon$11, "game.shared.ServerState$$anon$11", ({
-  Lgame_shared_ServerState$$anon$11: 1,
+var $d_Lgame_shared_ServerState$$anon$13 = new $TypeData().initClass($c_Lgame_shared_ServerState$$anon$13, "game.shared.ServerState$$anon$13", ({
+  Lgame_shared_ServerState$$anon$13: 1,
   Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader: 1,
   Lupickle_implicits_CaseClassReadWriters$CaseClassReader: 1,
   Lupickle_core_Visitor: 1,
@@ -42283,6 +42714,9 @@ $c_sc_AbstractSeq.prototype.hashCode__I = (function() {
 $c_sc_AbstractSeq.prototype.toString__T = (function() {
   return $f_sc_Iterable__toString__T(this);
 });
+$c_sc_AbstractSeq.prototype.size__I = (function() {
+  return this.length__I();
+});
 $c_sc_AbstractSeq.prototype.lengthCompare__I__I = (function(len) {
   return $f_sc_IterableOps__sizeCompare__I__I(this, len);
 });
@@ -42303,6 +42737,9 @@ function $h_sc_AbstractSeqView() {
 $h_sc_AbstractSeqView.prototype = $c_sc_AbstractSeqView.prototype;
 $c_sc_AbstractSeqView.prototype.stringPrefix__T = (function() {
   return "SeqView";
+});
+$c_sc_AbstractSeqView.prototype.size__I = (function() {
+  return this.length__I();
 });
 $c_sc_AbstractSeqView.prototype.lengthCompare__I__I = (function(len) {
   return $f_sc_IterableOps__sizeCompare__I__I(this, len);
@@ -43874,6 +44311,9 @@ $c_sjsr_WrappedVarArgs.prototype.hashCode__I = (function() {
 });
 $c_sjsr_WrappedVarArgs.prototype.toString__T = (function() {
   return $f_sc_Iterable__toString__T(this);
+});
+$c_sjsr_WrappedVarArgs.prototype.size__I = (function() {
+  return this.length__I();
 });
 $c_sjsr_WrappedVarArgs.prototype.isEmpty__Z = (function() {
   return $f_sc_SeqOps__isEmpty__Z(this);

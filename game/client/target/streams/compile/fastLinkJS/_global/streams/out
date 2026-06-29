@@ -1,25 +1,25 @@
 [info] Fast optimizing /home/runner/workspace/game/client/target/scala-3.3.4/client-fastopt
-[debug] Linker: Compute reachability: 1125201 us
-[debug] Linker: Assemble LinkedClasses: 90249 us
-[debug] Linker: 1237390 us
+[debug] Linker: Compute reachability: 1414337 us
+[debug] Linker: Assemble LinkedClasses: 85280 us
+[debug] Linker: 1547317 us
 [debug] Optimizer: Batch mode: true
-[debug] Optimizer: Incremental part: 385789 us
-[debug] Optimizer: Elidable constructors: 6848 us
-[debug] Optimizer: Optimizing 8523 methods.
-[debug] Optimizer: Optimizer part: 1397834 us
-[debug] Optimizer: 1806693 us
-[debug] Refiner: Compute reachability: 191561 us
-[debug] Refiner: Assemble LinkedClasses: 14105 us
-[debug] Refiner: 211441 us
-[debug] Module Splitter: Calculate Dependency Info: 6491 us
-[debug] Module Splitter: Analyze Modules: 1100 us
-[debug] Module Splitter: Assemble Modules: 7800 us
-[debug] Module Splitter: 17512 us
-[debug] Emitter: Generate Classes: 801295 us
-[debug] Emitter: Write trees: 31274 us
-[debug] Emitter: Class tree cache stats: reused: 0 -- invalidated: 868
-[debug] Emitter: Method tree cache stats: reused: 0 -- invalidated: 4257
-[debug] Emitter: Pre prints: 5989
-[debug] Emitter: 880030 us
-[debug] BasicBackend: Write result: 82254 us
+[debug] Optimizer: Incremental part: 483312 us
+[debug] Optimizer: Elidable constructors: 9896 us
+[debug] Optimizer: Optimizing 8592 methods.
+[debug] Optimizer: Optimizer part: 1595096 us
+[debug] Optimizer: 2102603 us
+[debug] Refiner: Compute reachability: 174451 us
+[debug] Refiner: Assemble LinkedClasses: 29486 us
+[debug] Refiner: 207778 us
+[debug] Module Splitter: Calculate Dependency Info: 2409 us
+[debug] Module Splitter: Analyze Modules: 2592 us
+[debug] Module Splitter: Assemble Modules: 9037 us
+[debug] Module Splitter: 26619 us
+[debug] Emitter: Generate Classes: 1262787 us
+[debug] Emitter: Write trees: 56368 us
+[debug] Emitter: Class tree cache stats: reused: 0 -- invalidated: 874
+[debug] Emitter: Method tree cache stats: reused: 0 -- invalidated: 4300
+[debug] Emitter: Pre prints: 6046
+[debug] Emitter: 1372859 us
+[debug] BasicBackend: Write result: 199894 us
 [debug] BasicBackend: total modules: 1; re-written: 1
