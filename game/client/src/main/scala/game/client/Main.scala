@@ -92,10 +92,13 @@ object Main:
 
     ws = new WebSocket(wsUrl)
 
-    // Wire up the shop button
+    // Wire up the shop buttons
     val pfBtn = dom.document.getElementById("upgrade-pathfinder-btn")
     if pfBtn != null then
       pfBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("pathfinder")))
+    val mgBtn = dom.document.getElementById("upgrade-magnet-btn")
+    if mgBtn != null then
+      mgBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("magnet")))
 
     ws.onopen = (_: Event) =>
       connected = true
@@ -140,21 +143,25 @@ object Main:
       status.textContent = "Connection error."
 
   def updateShopUI(me: Player): Unit =
-    val btn = dom.document.getElementById("upgrade-pathfinder-btn")
-    if btn == null then return
-    val b = btn.asInstanceOf[html.Button]
-    if me.upgrades.contains("pathfinder") then
-      b.textContent = "Pathfinder  ★  (owned)"
-      b.disabled = true
-      b.setAttribute("data-state", "owned")
-    else if me.points >= 5 then
-      b.textContent = "Pathfinder  —  5 pts"
-      b.disabled = false
-      b.setAttribute("data-state", "")
-    else
-      b.textContent = s"Pathfinder  —  5 pts  (need ${5 - me.points} more)"
-      b.disabled = true
-      b.setAttribute("data-state", "")
+    def setBtn(id: String, label: String, cost: Int, upgradeId: String): Unit =
+      val el = dom.document.getElementById(id)
+      if el == null then return
+      val b = el.asInstanceOf[html.Button]
+      if me.upgrades.contains(upgradeId) then
+        b.textContent = s"$label  (owned)"
+        b.disabled = true
+        b.setAttribute("data-state", "owned")
+      else if me.points >= cost then
+        b.textContent = s"$label  —  $cost pts"
+        b.disabled = false
+        b.setAttribute("data-state", "")
+      else
+        b.textContent = s"$label  —  $cost pts  (need ${cost - me.points} more)"
+        b.disabled = true
+        b.setAttribute("data-state", "")
+
+    setBtn("upgrade-pathfinder-btn", "Pathfinder ★", 5,  "pathfinder")
+    setBtn("upgrade-magnet-btn",     "Magnet ◆",    25, "magnet")
 
   def send(msg: ClientMsg): Unit =
     if ws != null && ws.readyState == WebSocket.OPEN then
@@ -284,14 +291,22 @@ object Main:
 
     ctx.shadowBlur = 0
 
-    // Pathfinder star badge (top-right corner of cell)
-    if hasPf && p.online && c >= 14 then
-      val starSize = Math.max(8, c / 3)
-      ctx.font = s"${starSize}px monospace"
-      ctx.textAlign = "right"
-      ctx.shadowColor = "#ffe84d"; ctx.shadowBlur = 8
-      ctx.fillStyle = "#ffe84d"
-      ctx.fillText("★", px + c - 1, py + starSize + 1)
+    // Badges (top-right / top-left corners)
+    val hasMg = p.upgrades.contains("magnet")
+    if (hasPf || hasMg) && p.online && c >= 14 then
+      val badgeSize = Math.max(8, c / 3)
+      ctx.font = s"${badgeSize}px monospace"
+      ctx.shadowBlur = 8
+      if hasPf then
+        ctx.textAlign = "right"
+        ctx.shadowColor = "#ffe84d"
+        ctx.fillStyle   = "#ffe84d"
+        ctx.fillText("★", px + c - 1, py + badgeSize + 1)
+      if hasMg then
+        ctx.textAlign = "left"
+        ctx.shadowColor = "#44ddff"
+        ctx.fillStyle   = "#44ddff"
+        ctx.fillText("◆", px + 1, py + badgeSize + 1)
       ctx.shadowBlur = 0
 
     // Name + pts labels

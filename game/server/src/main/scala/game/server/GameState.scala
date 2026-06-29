@@ -14,7 +14,7 @@ val GRID_H      = 20
 val FOOD_COUNT  = 20
 val FOOD_POINTS = 5
 
-val UPGRADE_COSTS = Map("pathfinder" -> 5)
+val UPGRADE_COSTS = Map("pathfinder" -> 5, "magnet" -> 25)
 
 val PLAYER_COLORS = Vector(
   "#e74c3c", "#3498db", "#2ecc71", "#f39c12",
@@ -190,6 +190,22 @@ class GameState(
                   case Some(newPos) => foodRef.set(without + newPos)
     yield ()
 
+  // Pure: step the second-closest pellet one square toward p
+  private def applyMagnet(p: Player, food: Set[(Int, Int)]): Set[(Int, Int)] =
+    if food.size < 2 then food
+    else
+      val sorted  = food.toVector.sortBy(f => Math.abs(f._1 - p.x) + Math.abs(f._2 - p.y))
+      val target  = sorted(1)
+      val rx      = p.x - target._1
+      val ry      = p.y - target._2
+      if rx == 0 && ry == 0 then food
+      else
+        val (mx, my)  = if Math.abs(rx) >= Math.abs(ry) then (rx.sign, 0) else (0, ry.sign)
+        val newPos    = (target._1 + mx, target._2 + my)
+        val otherFood = food - target
+        if otherFood.contains(newPos) then food   // blocked — leave in place
+        else otherFood + newPos
+
   def tick(): IO[Unit] =
     for
       ps   <- playersRef.get
@@ -199,6 +215,11 @@ class GameState(
                   if p.upgrades.contains("pathfinder") then dirTowardFood(p, food, DIRS)
                   else DIRS(Random.nextInt(DIRS.size))
                 movePlayer(p.id, dx, dy)
+              }
+      // Magnet: pull second-closest pellet one step toward each owner
+      ps2  <- playersRef.get
+      _    <- ps2.values.toList.filter(p => p.online && p.upgrades.contains("magnet")).traverse_ { p =>
+                foodRef.update(applyMagnet(p, _))
               }
       _    <- wanderOneFood()
       _    <- broadcastCurrent()
