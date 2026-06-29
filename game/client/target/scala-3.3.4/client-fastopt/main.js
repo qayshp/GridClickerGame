@@ -1172,6 +1172,8 @@ $c_Lgame_client_Main$.prototype.init__V = (function() {
       } else {
         var x = user.firstName;
         var firstName = $as_T(((x === (void 0)) ? "" : x));
+        var x$1 = user.id;
+        var userId = $as_T(((x$1 === (void 0)) ? "" : x$1));
         matchResult1: {
           var name;
           var x1 = $f_T__trim__T($n(firstName));
@@ -1185,73 +1187,7 @@ $c_Lgame_client_Main$.prototype.init__V = (function() {
         if ((logoutBtn !== null)) {
           logoutBtn.style.display = "inline-block";
         }
-        var proto = (($as_T(window.location.protocol) === "https:") ? "wss:" : "ws:");
-        var wsUrl = (((proto + "//") + $as_T(window.location.host)) + "/ws");
-        this.Lgame_client_Main$__f_ws = new WebSocket(wsUrl);
-        this.Lgame_client_Main$__f_ws.onopen = ((_$5) => {
-          this.Lgame_client_Main$__f_connected = true;
-          var x$1 = $doubleToInt((2.68435455E8 * $uD(Math.random())));
-          this.Lgame_client_Main$__f_myId = ("p-" + $as_T($uD((x$1 >>> 0.0)).toString(16)));
-          var clientId = this.Lgame_client_Main$__f_myId;
-          this.send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Join(name, clientId));
-          status.textContent = ("Playing as: " + name);
-        });
-        this.Lgame_client_Main$__f_ws.onmessage = ((e) => {
-          var this$15 = $m_Lupickle_default$();
-          var s = $dp_toString__T($n(e.data));
-          var s$1 = new $c_Lujson_Readable$fromTransformer(s, $m_Lujson_StringParser$());
-          $m_Lupickle_default$();
-          var trace = false;
-          var evidence$3 = $m_Lgame_shared_ServerState$().derived$ReadWriter__Lupickle_core_Types$ReadWriter();
-          var state = $as_Lgame_shared_ServerState($f_Lupickle_Api__read__Lujson_Readable__Z__Lupickle_core_Types$Reader__O(this$15, s$1, trace, evidence$3));
-          this.Lgame_client_Main$__f_players = $n(state).Lgame_shared_ServerState__f_players;
-          this.renderFrame__Lorg_scalajs_dom_CanvasRenderingContext2D__Lorg_scalajs_dom_HTMLCanvasElement__V(ctx, canvas);
-        });
-        this.Lgame_client_Main$__f_ws.onclose = ((_$6) => {
-          this.Lgame_client_Main$__f_connected = false;
-          status.textContent = "Disconnected. Refresh to reconnect.";
-        });
-        this.Lgame_client_Main$__f_ws.onerror = ((_$7) => {
-          status.textContent = "Connection error.";
-        });
-        document.addEventListener("keydown", ((e$2) => {
-          if ($m_Lgame_client_Main$().Lgame_client_Main$__f_connected) {
-            var x2 = $as_T(e$2.key);
-            switch (x2) {
-              case "ArrowUp":
-              case "w":
-              case "W": {
-                e$2.preventDefault();
-                $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move(0, (-1)));
-                break;
-              }
-              case "ArrowDown":
-              case "s":
-              case "S": {
-                e$2.preventDefault();
-                $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move(0, 1));
-                break;
-              }
-              case "ArrowLeft":
-              case "a":
-              case "A": {
-                e$2.preventDefault();
-                $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move((-1), 0));
-                break;
-              }
-              case "ArrowRight":
-              case "d":
-              case "D": {
-                e$2.preventDefault();
-                $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move(1, 0));
-                break;
-              }
-            }
-            return (void 0);
-          } else {
-            return (void 0);
-          }
-        }));
+        $m_Lgame_client_Main$().connectGame__T__T__Lorg_scalajs_dom_HTMLCanvasElement__Lorg_scalajs_dom_CanvasRenderingContext2D__Lorg_scalajs_dom_Element__V(name, userId, canvas, ctx, status);
         return (void 0);
       }
     } else {
@@ -1263,6 +1199,81 @@ $c_Lgame_client_Main$.prototype.init__V = (function() {
     window.location.href = "/api/login?returnTo=/";
   });
   xhr.send();
+});
+$c_Lgame_client_Main$.prototype.connectGame__T__T__Lorg_scalajs_dom_HTMLCanvasElement__Lorg_scalajs_dom_CanvasRenderingContext2D__Lorg_scalajs_dom_Element__V = (function(playerName, userId, canvas, ctx, status) {
+  var proto = (($as_T(window.location.protocol) === "https:") ? "wss:" : "ws:");
+  var wsUrl = (((proto + "//") + $as_T(window.location.host)) + "/ws");
+  this.Lgame_client_Main$__f_ws = new WebSocket(wsUrl);
+  this.Lgame_client_Main$__f_ws.onopen = ((_$5) => {
+    this.Lgame_client_Main$__f_connected = true;
+    var this$4 = $n(userId);
+    if ((!(this$4 === ""))) {
+      var $x_1 = userId;
+    } else {
+      var x = $doubleToInt((2.68435455E8 * $uD(Math.random())));
+      var $x_1 = ("p-" + $as_T($uD((x >>> 0.0)).toString(16)));
+    }
+    this.Lgame_client_Main$__f_myId = $x_1;
+    var clientId = this.Lgame_client_Main$__f_myId;
+    this.send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Join(playerName, clientId, userId));
+    status.textContent = ("Playing as: " + playerName);
+  });
+  this.Lgame_client_Main$__f_ws.onmessage = ((e) => {
+    var this$11 = $m_Lupickle_default$();
+    var s = $dp_toString__T($n(e.data));
+    var s$1 = new $c_Lujson_Readable$fromTransformer(s, $m_Lujson_StringParser$());
+    $m_Lupickle_default$();
+    var trace = false;
+    var evidence$3 = $m_Lgame_shared_ServerState$().derived$ReadWriter__Lupickle_core_Types$ReadWriter();
+    var state = $as_Lgame_shared_ServerState($f_Lupickle_Api__read__Lujson_Readable__Z__Lupickle_core_Types$Reader__O(this$11, s$1, trace, evidence$3));
+    this.Lgame_client_Main$__f_players = $n(state).Lgame_shared_ServerState__f_players;
+    this.renderFrame__Lorg_scalajs_dom_CanvasRenderingContext2D__Lorg_scalajs_dom_HTMLCanvasElement__V(ctx, canvas);
+  });
+  this.Lgame_client_Main$__f_ws.onclose = ((_$6) => {
+    this.Lgame_client_Main$__f_connected = false;
+    status.textContent = "Disconnected. Refresh to reconnect.";
+  });
+  this.Lgame_client_Main$__f_ws.onerror = ((_$7) => {
+    status.textContent = "Connection error.";
+  });
+  document.addEventListener("keydown", ((e$2) => {
+    if ($m_Lgame_client_Main$().Lgame_client_Main$__f_connected) {
+      var x2 = $as_T(e$2.key);
+      switch (x2) {
+        case "ArrowUp":
+        case "w":
+        case "W": {
+          e$2.preventDefault();
+          $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move(0, (-1)));
+          break;
+        }
+        case "ArrowDown":
+        case "s":
+        case "S": {
+          e$2.preventDefault();
+          $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move(0, 1));
+          break;
+        }
+        case "ArrowLeft":
+        case "a":
+        case "A": {
+          e$2.preventDefault();
+          $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move((-1), 0));
+          break;
+        }
+        case "ArrowRight":
+        case "d":
+        case "D": {
+          e$2.preventDefault();
+          $m_Lgame_client_Main$().send__Lgame_shared_ClientMsg__V(new $c_Lgame_shared_ClientMsg$Move(1, 0));
+          break;
+        }
+      }
+      return (void 0);
+    } else {
+      return (void 0);
+    }
+  }));
 });
 $c_Lgame_client_Main$.prototype.send__Lgame_shared_ClientMsg__V = (function(msg) {
   if (((this.Lgame_client_Main$__f_ws !== null) && ($uI(this.Lgame_client_Main$__f_ws.readyState) === $uI(WebSocket.OPEN)))) {
@@ -1344,14 +1355,23 @@ $c_Lgame_client_Main$.prototype.renderFrame__Lorg_scalajs_dom_CanvasRenderingCon
 $c_Lgame_client_Main$.prototype.drawPlayer__Lorg_scalajs_dom_CanvasRenderingContext2D__Lgame_shared_Player__Z__I__V = (function(ctx, p, isMe, c) {
   var px = Math.imul($n(p).Lgame_shared_Player__f_x, c);
   var py = Math.imul($n(p).Lgame_shared_Player__f_y, c);
-  if (isMe) {
+  ctx.save();
+  if ((!$n(p).Lgame_shared_Player__f_online)) {
+    ctx.globalAlpha = 0.35;
+  }
+  if ((isMe && $n(p).Lgame_shared_Player__f_online)) {
     ctx.shadowColor = $n(p).Lgame_shared_Player__f_color;
     ctx.shadowBlur = 10.0;
   } else {
     ctx.shadowBlur = 0.0;
   }
-  var s = $n(p).Lgame_shared_Player__f_color;
-  ctx.fillStyle = s;
+  if ($n(p).Lgame_shared_Player__f_online) {
+    var s = $n(p).Lgame_shared_Player__f_color;
+    var $x_1 = s;
+  } else {
+    var $x_1 = "#666688";
+  }
+  ctx.fillStyle = $x_1;
   var x = ((px + ((c / 5) | 0)) | 0);
   var x$1 = ((py + ((Math.imul(3, c) / 8) | 0)) | 0);
   var x$2 = ((Math.imul(3, c) / 5) | 0);
@@ -1362,43 +1382,61 @@ $c_Lgame_client_Main$.prototype.drawPlayer__Lorg_scalajs_dom_CanvasRenderingCont
   var x$6 = (((c << 1) / 5) | 0);
   var x$7 = ((Math.imul(3, c) / 8) | 0);
   ctx.fillRect(x$4, x$5, x$6, x$7);
-  ctx.fillStyle = "#ffffff";
-  var x$8 = ((px + (((c << 1) / 5) | 0)) | 0);
-  var x$9 = ((py + ((c / 7) | 0)) | 0);
-  var x$10 = ((c / 9) | 0);
-  var x$11 = ((x$10 > 2) ? x$10 : 2);
-  var x$12 = ((c / 9) | 0);
-  var x$13 = ((x$12 > 2) ? x$12 : 2);
-  ctx.fillRect(x$8, x$9, x$11, x$13);
-  var x$14 = ((c / 9) | 0);
-  var x$15 = ((((((px + c) | 0) - (((c << 1) / 5) | 0)) | 0) - ((x$14 > 2) ? x$14 : 2)) | 0);
-  var x$16 = ((py + ((c / 7) | 0)) | 0);
-  var x$17 = ((c / 9) | 0);
-  var x$18 = ((x$17 > 2) ? x$17 : 2);
-  var x$19 = ((c / 9) | 0);
-  var x$20 = ((x$19 > 2) ? x$19 : 2);
-  ctx.fillRect(x$15, x$16, x$18, x$20);
-  if (isMe) {
+  if ($n(p).Lgame_shared_Player__f_online) {
+    ctx.fillStyle = "#ffffff";
+    var x$8 = ((px + (((c << 1) / 5) | 0)) | 0);
+    var x$9 = ((py + ((c / 7) | 0)) | 0);
+    var x$10 = ((c / 9) | 0);
+    var x$11 = ((x$10 > 2) ? x$10 : 2);
+    var x$12 = ((c / 9) | 0);
+    var x$13 = ((x$12 > 2) ? x$12 : 2);
+    ctx.fillRect(x$8, x$9, x$11, x$13);
+    var x$14 = ((c / 9) | 0);
+    var x$15 = ((((((px + c) | 0) - (((c << 1) / 5) | 0)) | 0) - ((x$14 > 2) ? x$14 : 2)) | 0);
+    var x$16 = ((py + ((c / 7) | 0)) | 0);
+    var x$17 = ((c / 9) | 0);
+    var x$18 = ((x$17 > 2) ? x$17 : 2);
+    var x$19 = ((c / 9) | 0);
+    var x$20 = ((x$19 > 2) ? x$19 : 2);
+    ctx.fillRect(x$15, x$16, x$18, x$20);
+  } else {
+    ctx.fillStyle = "#888899";
+    var x$21 = ((px + (((c << 1) / 5) | 0)) | 0);
+    var x$22 = ((c / 9) | 0);
+    var x$23 = ((((py + ((c / 7) | 0)) | 0) + ((((x$22 > 2) ? x$22 : 2) / 2) | 0)) | 0);
+    var x$24 = ((c / 9) | 0);
+    var x$25 = ((x$24 > 2) ? x$24 : 2);
+    ctx.fillRect(x$21, x$23, x$25, 1.0);
+    var x$26 = ((c / 9) | 0);
+    var x$27 = ((((((px + c) | 0) - (((c << 1) / 5) | 0)) | 0) - ((x$26 > 2) ? x$26 : 2)) | 0);
+    var x$28 = ((c / 9) | 0);
+    var x$29 = ((((py + ((c / 7) | 0)) | 0) + ((((x$28 > 2) ? x$28 : 2) / 2) | 0)) | 0);
+    var x$30 = ((c / 9) | 0);
+    var x$31 = ((x$30 > 2) ? x$30 : 2);
+    ctx.fillRect(x$27, x$29, x$31, 1.0);
+  }
+  if ((isMe && $n(p).Lgame_shared_Player__f_online)) {
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 1.0;
-    var x$21 = ((1 + px) | 0);
-    var x$22 = ((1 + py) | 0);
-    var x$23 = (((-2) + c) | 0);
-    var x$24 = (((-2) + c) | 0);
-    ctx.strokeRect(x$21, x$22, x$23, x$24);
+    var x$32 = ((1 + px) | 0);
+    var x$33 = ((1 + py) | 0);
+    var x$34 = (((-2) + c) | 0);
+    var x$35 = (((-2) + c) | 0);
+    ctx.strokeRect(x$32, x$33, x$34, x$35);
   }
   ctx.shadowBlur = 0.0;
   if ((c >= 14)) {
-    ctx.fillStyle = (isMe ? "#ffffff" : "#aaaacc");
+    ctx.fillStyle = (isMe ? "#ffffff" : ($n(p).Lgame_shared_Player__f_online ? "#aaaacc" : "#666688"));
     var b = ((c / 4) | 0);
     var fontSize = ((b < 7) ? 7 : b);
     ctx.font = (("bold " + fontSize) + "px monospace");
     ctx.textAlign = "center";
-    var $x_1 = $n(p).Lgame_shared_Player__f_name;
-    var x$25 = ((px + ((c / 2) | 0)) | 0);
-    var x$26 = ((((py + c) | 0) + fontSize) | 0);
-    ctx.fillText($x_1, x$25, x$26);
+    var label = ($n(p).Lgame_shared_Player__f_online ? $n(p).Lgame_shared_Player__f_name : ($n(p).Lgame_shared_Player__f_name + " (away)"));
+    var x$36 = ((px + ((c / 2) | 0)) | 0);
+    var x$37 = ((((py + c) | 0) + fontSize) | 0);
+    ctx.fillText(label, x$36, x$37);
   }
+  ctx.restore();
 });
 var $d_Lgame_client_Main$ = new $TypeData().initClass($c_Lgame_client_Main$, "game.client.Main$", ({
   Lgame_client_Main$: 1
@@ -15509,7 +15547,7 @@ $c_Lgame_shared_ClientMsg$Join$.prototype.toString__T = (function() {
   return "Join";
 });
 $c_Lgame_shared_ClientMsg$Join$.prototype.fromProduct__s_Product__Lgame_shared_ClientMsg$Join = (function(x$0) {
-  return new $c_Lgame_shared_ClientMsg$Join($as_T($n(x$0).productElement__I__O(0)), $as_T($n(x$0).productElement__I__O(1)));
+  return new $c_Lgame_shared_ClientMsg$Join($as_T($n(x$0).productElement__I__O(0)), $as_T($n(x$0).productElement__I__O(1)), $as_T($n(x$0).productElement__I__O(2)));
 });
 $c_Lgame_shared_ClientMsg$Join$.prototype.fromProduct__s_Product__O = (function(p) {
   return this.fromProduct__s_Product__Lgame_shared_ClientMsg$Join(p);
@@ -15585,7 +15623,7 @@ $c_Lgame_shared_Player$.prototype.derived$ReadWriter__Lupickle_core_Types$ReadWr
   return this.Lgame_shared_Player$__f_derived$ReadWriter$lzy1;
 });
 $c_Lgame_shared_Player$.prototype.fromProduct__s_Product__Lgame_shared_Player = (function(x$0) {
-  return new $c_Lgame_shared_Player($as_T($n(x$0).productElement__I__O(0)), $uI($n(x$0).productElement__I__O(1)), $uI($n(x$0).productElement__I__O(2)), $as_T($n(x$0).productElement__I__O(3)), $as_T($n(x$0).productElement__I__O(4)));
+  return new $c_Lgame_shared_Player($as_T($n(x$0).productElement__I__O(0)), $uI($n(x$0).productElement__I__O(1)), $uI($n(x$0).productElement__I__O(2)), $as_T($n(x$0).productElement__I__O(3)), $as_T($n(x$0).productElement__I__O(4)), $uZ($n(x$0).productElement__I__O(5)));
 });
 $c_Lgame_shared_Player$.prototype.fromProduct__s_Product__O = (function(p) {
   return this.fromProduct__s_Product__Lgame_shared_Player(p);
@@ -20124,17 +20162,19 @@ function $f_Lupickle_implicits_Writers$SimpleMapKeyWriter__write0__Lupickle_core
   return $n(out).visitString__jl_CharSequence__I__O($thiz.writeString__O__T(v), (-1));
 }
 /** @constructor */
-function $c_Lgame_shared_Player(id, x, y, color, name) {
+function $c_Lgame_shared_Player(id, x, y, color, name, online) {
   this.Lgame_shared_Player__f_id = null;
   this.Lgame_shared_Player__f_x = 0;
   this.Lgame_shared_Player__f_y = 0;
   this.Lgame_shared_Player__f_color = null;
   this.Lgame_shared_Player__f_name = null;
+  this.Lgame_shared_Player__f_online = false;
   this.Lgame_shared_Player__f_id = id;
   this.Lgame_shared_Player__f_x = x;
   this.Lgame_shared_Player__f_y = y;
   this.Lgame_shared_Player__f_color = color;
   this.Lgame_shared_Player__f_name = name;
+  this.Lgame_shared_Player__f_online = online;
 }
 $c_Lgame_shared_Player.prototype = new $h_O();
 $c_Lgame_shared_Player.prototype.constructor = $c_Lgame_shared_Player;
@@ -20169,14 +20209,17 @@ $c_Lgame_shared_Player.prototype.hashCode__I = (function() {
   var data$5 = $m_sr_Statics$().anyHash__O__I(x$2);
   acc = $m_sr_Statics$().mix__I__I__I(hash$5, data$5);
   var hash$6 = acc;
-  return $m_sr_Statics$().finalizeHash__I__I__I(hash$6, 5);
+  var data$6 = (this.Lgame_shared_Player__f_online ? 1231 : 1237);
+  acc = $m_sr_Statics$().mix__I__I__I(hash$6, data$6);
+  var hash$7 = acc;
+  return $m_sr_Statics$().finalizeHash__I__I__I(hash$7, 6);
 });
 $c_Lgame_shared_Player.prototype.equals__O__Z = (function(x$0) {
   if ((this === x$0)) {
     return true;
   } else if ((x$0 instanceof $c_Lgame_shared_Player)) {
     var x$0$2 = $as_Lgame_shared_Player(x$0);
-    return ((((((this.Lgame_shared_Player__f_x === $n(x$0$2).Lgame_shared_Player__f_x) && (this.Lgame_shared_Player__f_y === $n(x$0$2).Lgame_shared_Player__f_y)) && (this.Lgame_shared_Player__f_id === $n(x$0$2).Lgame_shared_Player__f_id)) && (this.Lgame_shared_Player__f_color === $n(x$0$2).Lgame_shared_Player__f_color)) && (this.Lgame_shared_Player__f_name === $n(x$0$2).Lgame_shared_Player__f_name)) && ($n(x$0$2), true));
+    return (((((((this.Lgame_shared_Player__f_x === $n(x$0$2).Lgame_shared_Player__f_x) && (this.Lgame_shared_Player__f_y === $n(x$0$2).Lgame_shared_Player__f_y)) && (this.Lgame_shared_Player__f_online === $n(x$0$2).Lgame_shared_Player__f_online)) && (this.Lgame_shared_Player__f_id === $n(x$0$2).Lgame_shared_Player__f_id)) && (this.Lgame_shared_Player__f_color === $n(x$0$2).Lgame_shared_Player__f_color)) && (this.Lgame_shared_Player__f_name === $n(x$0$2).Lgame_shared_Player__f_name)) && ($n(x$0$2), true));
   } else {
     return false;
   }
@@ -20185,7 +20228,7 @@ $c_Lgame_shared_Player.prototype.toString__T = (function() {
   return $m_sr_ScalaRunTime$()._toString__s_Product__T(this);
 });
 $c_Lgame_shared_Player.prototype.productArity__I = (function() {
-  return 5;
+  return 6;
 });
 $c_Lgame_shared_Player.prototype.productPrefix__T = (function() {
   return "Player";
@@ -20210,6 +20253,10 @@ $c_Lgame_shared_Player.prototype.productElement__I__O = (function(n) {
     }
     case 4: {
       return this.Lgame_shared_Player__f_name;
+      break;
+    }
+    case 5: {
+      return this.Lgame_shared_Player__f_online;
       break;
     }
     default: {
@@ -24999,7 +25046,7 @@ $c_Lgame_shared_ClientMsg$$anon$10.prototype.write0__Lupickle_core_Visitor__Lgam
   if ((v === null)) {
     return $n(out).visitNull__I__O((-1));
   } else {
-    var ctx = $n(out).visitObject__I__Z__I__Lupickle_core_ObjVisitor(2, true, (-1));
+    var ctx = $n(out).visitObject__I__Z__I__Lupickle_core_ObjVisitor(3, true, (-1));
     $n($n(this.Lgame_shared_ClientMsg$$anon$10__f_WritersVersionSpecific_this$15).Lupickle_default$__f_outerThis);
     var mappedArgsI = "name";
     var w = $m_Lupickle_default$().Lupickle_default$__f_StringWriter;
@@ -25010,6 +25057,11 @@ $c_Lgame_shared_ClientMsg$$anon$10.prototype.write0__Lupickle_core_Visitor__Lgam
     var w$1 = $m_Lupickle_default$().Lupickle_default$__f_StringWriter;
     var value$1 = $n(v).Lgame_shared_ClientMsg$Join__f_clientId;
     $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$1, w$1, value$1);
+    $n($n(this.Lgame_shared_ClientMsg$$anon$10__f_WritersVersionSpecific_this$15).Lupickle_default$__f_outerThis);
+    var mappedArgsI$2 = "userId";
+    var w$2 = $m_Lupickle_default$().Lupickle_default$__f_StringWriter;
+    var value$2 = $n(v).Lgame_shared_ClientMsg$Join__f_userId;
+    $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$2, w$2, value$2);
     return $n(ctx).visitEnd__I__O((-1));
   }
 });
@@ -25024,10 +25076,15 @@ $c_Lgame_shared_ClientMsg$$anon$10.prototype.writeToObject__Lupickle_core_ObjVis
   var w$1 = $m_Lupickle_default$().Lupickle_default$__f_StringWriter;
   var value$1 = $n(v).Lgame_shared_ClientMsg$Join__f_clientId;
   $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$1, w$1, value$1);
+  $n($n(this.Lgame_shared_ClientMsg$$anon$10__f_WritersVersionSpecific_this$15).Lupickle_default$__f_outerThis);
+  var mappedArgsI$2 = "userId";
+  var w$2 = $m_Lupickle_default$().Lupickle_default$__f_StringWriter;
+  var value$2 = $n(v).Lgame_shared_ClientMsg$Join__f_userId;
+  $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$2, w$2, value$2);
 });
 $c_Lgame_shared_ClientMsg$$anon$10.prototype.length__O__I = (function(v) {
   $as_Lgame_shared_ClientMsg$Join(v);
-  return 2;
+  return 3;
 });
 $c_Lgame_shared_ClientMsg$$anon$10.prototype.write0__Lupickle_core_Visitor__O__O = (function(out, v) {
   return this.write0__Lupickle_core_Visitor__Lgame_shared_ClientMsg$Join__O(out, $as_Lgame_shared_ClientMsg$Join(v));
@@ -25113,11 +25170,13 @@ var $d_Lgame_shared_ClientMsg$$anon$9 = new $TypeData().initClass($c_Lgame_share
   Lupickle_implicits_CaseClassReadWriters$CaseClassWriter: 1
 }));
 /** @constructor */
-function $c_Lgame_shared_ClientMsg$Join(name, clientId) {
+function $c_Lgame_shared_ClientMsg$Join(name, clientId, userId) {
   this.Lgame_shared_ClientMsg$Join__f_name = null;
   this.Lgame_shared_ClientMsg$Join__f_clientId = null;
+  this.Lgame_shared_ClientMsg$Join__f_userId = null;
   this.Lgame_shared_ClientMsg$Join__f_name = name;
   this.Lgame_shared_ClientMsg$Join__f_clientId = clientId;
+  this.Lgame_shared_ClientMsg$Join__f_userId = userId;
 }
 $c_Lgame_shared_ClientMsg$Join.prototype = new $h_O();
 $c_Lgame_shared_ClientMsg$Join.prototype.constructor = $c_Lgame_shared_ClientMsg$Join;
@@ -25137,7 +25196,7 @@ $c_Lgame_shared_ClientMsg$Join.prototype.equals__O__Z = (function(x$0) {
     return true;
   } else if ((x$0 instanceof $c_Lgame_shared_ClientMsg$Join)) {
     var x$0$2 = $as_Lgame_shared_ClientMsg$Join(x$0);
-    return (((this.Lgame_shared_ClientMsg$Join__f_name === $n(x$0$2).Lgame_shared_ClientMsg$Join__f_name) && (this.Lgame_shared_ClientMsg$Join__f_clientId === $n(x$0$2).Lgame_shared_ClientMsg$Join__f_clientId)) && ($n(x$0$2), true));
+    return ((((this.Lgame_shared_ClientMsg$Join__f_name === $n(x$0$2).Lgame_shared_ClientMsg$Join__f_name) && (this.Lgame_shared_ClientMsg$Join__f_clientId === $n(x$0$2).Lgame_shared_ClientMsg$Join__f_clientId)) && (this.Lgame_shared_ClientMsg$Join__f_userId === $n(x$0$2).Lgame_shared_ClientMsg$Join__f_userId)) && ($n(x$0$2), true));
   } else {
     return false;
   }
@@ -25146,19 +25205,29 @@ $c_Lgame_shared_ClientMsg$Join.prototype.toString__T = (function() {
   return $m_sr_ScalaRunTime$()._toString__s_Product__T(this);
 });
 $c_Lgame_shared_ClientMsg$Join.prototype.productArity__I = (function() {
-  return 2;
+  return 3;
 });
 $c_Lgame_shared_ClientMsg$Join.prototype.productPrefix__T = (function() {
   return "Join";
 });
 $c_Lgame_shared_ClientMsg$Join.prototype.productElement__I__O = (function(n) {
-  if ((n === 0)) {
-    return this.Lgame_shared_ClientMsg$Join__f_name;
+  switch (n) {
+    case 0: {
+      return this.Lgame_shared_ClientMsg$Join__f_name;
+      break;
+    }
+    case 1: {
+      return this.Lgame_shared_ClientMsg$Join__f_clientId;
+      break;
+    }
+    case 2: {
+      return this.Lgame_shared_ClientMsg$Join__f_userId;
+      break;
+    }
+    default: {
+      throw $ct_jl_IndexOutOfBoundsException__T__(new $c_jl_IndexOutOfBoundsException(), ("" + n));
+    }
   }
-  if ((n === 1)) {
-    return this.Lgame_shared_ClientMsg$Join__f_clientId;
-  }
-  throw $ct_jl_IndexOutOfBoundsException__T__(new $c_jl_IndexOutOfBoundsException(), ("" + n));
 });
 function $as_Lgame_shared_ClientMsg$Join(obj) {
   return (((obj instanceof $c_Lgame_shared_ClientMsg$Join) || (obj === null)) ? obj : $throwClassCastException(obj, "game.shared.ClientMsg$Join"));
@@ -25277,7 +25346,7 @@ $c_Lgame_shared_Player$$anon$2.prototype.write0__Lupickle_core_Visitor__Lgame_sh
   if ((v === null)) {
     return $n(out).visitNull__I__O((-1));
   } else {
-    var ctx = $n(out).visitObject__I__Z__I__Lupickle_core_ObjVisitor(5, true, (-1));
+    var ctx = $n(out).visitObject__I__Z__I__Lupickle_core_ObjVisitor(6, true, (-1));
     $n($n(this.Lgame_shared_Player$$anon$2__f_WritersVersionSpecific_this$2).Lupickle_default$__f_outerThis);
     var mappedArgsI = "id";
     var w = $m_Lupickle_default$().Lupickle_default$__f_StringWriter;
@@ -25303,6 +25372,11 @@ $c_Lgame_shared_Player$$anon$2.prototype.write0__Lupickle_core_Visitor__Lgame_sh
     var w$4 = $m_Lupickle_default$().Lupickle_default$__f_StringWriter;
     var value$4 = $n(v).Lgame_shared_Player__f_name;
     $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$4, w$4, value$4);
+    $n($n(this.Lgame_shared_Player$$anon$2__f_WritersVersionSpecific_this$2).Lupickle_default$__f_outerThis);
+    var mappedArgsI$5 = "online";
+    var w$5 = $m_Lupickle_default$().Lupickle_default$__f_BooleanWriter;
+    var value$5 = $n(v).Lgame_shared_Player__f_online;
+    $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$5, w$5, value$5);
     return $n(ctx).visitEnd__I__O((-1));
   }
 });
@@ -25332,10 +25406,15 @@ $c_Lgame_shared_Player$$anon$2.prototype.writeToObject__Lupickle_core_ObjVisitor
   var w$4 = $m_Lupickle_default$().Lupickle_default$__f_StringWriter;
   var value$4 = $n(v).Lgame_shared_Player__f_name;
   $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$4, w$4, value$4);
+  $n($n(this.Lgame_shared_Player$$anon$2__f_WritersVersionSpecific_this$2).Lupickle_default$__f_outerThis);
+  var mappedArgsI$5 = "online";
+  var w$5 = $m_Lupickle_default$().Lupickle_default$__f_BooleanWriter;
+  var value$5 = $n(v).Lgame_shared_Player__f_online;
+  $f_Lupickle_implicits_CaseClassReadWriters$CaseClassWriter__writeSnippetMappedName__Lupickle_core_ObjVisitor__jl_CharSequence__O__O__V(this, ctx, mappedArgsI$5, w$5, value$5);
 });
 $c_Lgame_shared_Player$$anon$2.prototype.length__O__I = (function(v) {
   $as_Lgame_shared_Player(v);
-  return 5;
+  return 6;
 });
 $c_Lgame_shared_Player$$anon$2.prototype.write0__Lupickle_core_Visitor__O__O = (function(out, v) {
   return this.write0__Lupickle_core_Visitor__Lgame_shared_Player__O(out, $as_Lgame_shared_Player(v));
@@ -37607,7 +37686,7 @@ function $c_Lgame_shared_ClientMsg$$anon$8(ReadersVersionSpecific_this$18, m$9, 
   if ((outer === null)) {
     throw $ct_jl_NullPointerException__(new $c_jl_NullPointerException());
   }
-  $ct_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__Lupickle_implicits_ReadersVersionSpecific__I__J__Z__(this, ReadersVersionSpecific_this$18, 2, new $c_RTLong(3, 0), $m_Lgame_shared_ClientMsg$().game$shared$ClientMsg$$$_$_$$anon$superArg$5$1__Lupickle_default$__Z(ReadersVersionSpecific_this$18));
+  $ct_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__Lupickle_implicits_ReadersVersionSpecific__I__J__Z__(this, ReadersVersionSpecific_this$18, 3, new $c_RTLong(7, 0), $m_Lgame_shared_ClientMsg$().game$shared$ClientMsg$$$_$_$$anon$superArg$5$1__Lupickle_default$__Z(ReadersVersionSpecific_this$18));
 }
 $c_Lgame_shared_ClientMsg$$anon$8.prototype = new $h_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader();
 $c_Lgame_shared_ClientMsg$$anon$8.prototype.constructor = $c_Lgame_shared_ClientMsg$$anon$8;
@@ -37618,30 +37697,48 @@ $h_Lgame_shared_ClientMsg$$anon$8.prototype = $c_Lgame_shared_ClientMsg$$anon$8.
 $c_Lgame_shared_ClientMsg$$anon$8.prototype.visitors0__s_Product = (function() {
   var x$2 = $m_Lupickle_default$().Lupickle_default$__f_StringReader;
   var x$2$2 = $m_Lupickle_default$().Lupickle_default$__f_StringReader;
+  var x$2$3 = $m_Lupickle_default$().Lupickle_default$__f_StringReader;
   var Tuple_this = $m_T$package$EmptyTuple$();
-  var res = $as_T1($m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$2, Tuple_this));
-  var res$2 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2, res);
-  return res$2;
+  var res = $as_T1($m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$3, Tuple_this));
+  var res$2 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$2, res);
+  var res$3 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2, res$2);
+  return res$3;
 });
 $c_Lgame_shared_ClientMsg$$anon$8.prototype.fromProduct__s_Product__Lgame_shared_ClientMsg$Join = (function(p) {
   return $as_Lgame_shared_ClientMsg$Join($n(this.Lgame_shared_ClientMsg$$anon$8__f_m$10).fromProduct__s_Product__O(p));
 });
 $c_Lgame_shared_ClientMsg$$anon$8.prototype.keyToIndex__T__I = (function(x) {
-  return ((x === "name") ? 0 : ((x === "clientId") ? 1 : (-1)));
+  switch (x) {
+    case "name": {
+      return 0;
+      break;
+    }
+    case "clientId": {
+      return 1;
+      break;
+    }
+    case "userId": {
+      return 2;
+      break;
+    }
+    default: {
+      return (-1);
+    }
+  }
 });
 $c_Lgame_shared_ClientMsg$$anon$8.prototype.allKeysArray__AT = (function() {
-  var this$3 = new $c_sci_$colon$colon(new $c_T2("name", "name"), new $c_sci_$colon$colon(new $c_T2("clientId", "clientId"), $m_sci_Nil$()));
+  var this$4 = new $c_sci_$colon$colon(new $c_T2("name", "name"), new $c_sci_$colon$colon(new $c_T2("clientId", "clientId"), new $c_sci_$colon$colon(new $c_T2("userId", "userId"), $m_sci_Nil$())));
   var f = ((_$1) => {
     var _$1$1 = $as_T2(_$1);
     return $as_T($n(_$1$1).T2__f__2);
   });
-  if ((this$3 === $m_sci_Nil$())) {
-    var this$5 = $m_sci_Nil$();
+  if ((this$4 === $m_sci_Nil$())) {
+    var this$6 = $m_sci_Nil$();
   } else {
-    var arg1 = this$3.sci_$colon$colon__f_head;
+    var arg1 = this$4.sci_$colon$colon__f_head;
     var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
     var t = h;
-    var rest = this$3.sci_$colon$colon__f_next;
+    var rest = this$4.sci_$colon$colon__f_next;
     while ((rest !== $m_sci_Nil$())) {
       var arg1$1 = $n(rest).head__O();
       var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
@@ -37649,12 +37746,12 @@ $c_Lgame_shared_ClientMsg$$anon$8.prototype.allKeysArray__AT = (function() {
       t = nx;
       rest = $as_sci_List($n(rest).tail__O());
     }
-    var this$5 = h;
+    var this$6 = h;
   }
-  if ((this$5.knownSize__I() >= 0)) {
-    var len = this$5.knownSize__I();
+  if ((this$6.knownSize__I() >= 0)) {
+    var len = this$6.knownSize__I();
     var destination = new ($d_T.getArrayOf().constr)(len);
-    $f_sc_IterableOnceOps__copyToArray__O__I__I__I(this$5, destination, 0, 2147483647);
+    $f_sc_IterableOnceOps__copyToArray__O__I__I__I(this$6, destination, 0, 2147483647);
     return destination;
   } else {
     var capacity = 0;
@@ -37663,7 +37760,7 @@ $c_Lgame_shared_ClientMsg$$anon$8.prototype.allKeysArray__AT = (function() {
     capacity = 0;
     size = 0;
     jsElems = [];
-    var it = this$5.iterator__sc_Iterator();
+    var it = this$6.iterator__sc_Iterator();
     while ($n(it).hasNext__Z()) {
       var elem = $n(it).next__O();
       var unboxedElem = ((elem === null) ? null : elem);
@@ -37700,7 +37797,7 @@ function $c_Lgame_shared_Player$$anon$1(ReadersVersionSpecific_this$1, m$1, oute
   if ((outer === null)) {
     throw $ct_jl_NullPointerException__(new $c_jl_NullPointerException());
   }
-  $ct_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__Lupickle_implicits_ReadersVersionSpecific__I__J__Z__(this, ReadersVersionSpecific_this$1, 5, new $c_RTLong(31, 0), $m_Lgame_shared_Player$().game$shared$Player$$$_$_$$anon$superArg$1$1__Lupickle_default$__Z(ReadersVersionSpecific_this$1));
+  $ct_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader__Lupickle_implicits_ReadersVersionSpecific__I__J__Z__(this, ReadersVersionSpecific_this$1, 6, new $c_RTLong(63, 0), $m_Lgame_shared_Player$().game$shared$Player$$$_$_$$anon$superArg$1$1__Lupickle_default$__Z(ReadersVersionSpecific_this$1));
 }
 $c_Lgame_shared_Player$$anon$1.prototype = new $h_Lupickle_implicits_ReadersVersionSpecific$CaseClassReadereader();
 $c_Lgame_shared_Player$$anon$1.prototype.constructor = $c_Lgame_shared_Player$$anon$1;
@@ -37714,13 +37811,15 @@ $c_Lgame_shared_Player$$anon$1.prototype.visitors0__s_Product = (function() {
   var x$2$3 = $m_Lupickle_default$().Lupickle_default$__f_IntReader;
   var x$2$4 = $m_Lupickle_default$().Lupickle_default$__f_StringReader;
   var x$2$5 = $m_Lupickle_default$().Lupickle_default$__f_StringReader;
+  var x$2$6 = $m_Lupickle_default$().Lupickle_default$__f_BooleanReader;
   var Tuple_this = $m_T$package$EmptyTuple$();
-  var res = $as_T1($m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$5, Tuple_this));
-  var res$2 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$4, res);
-  var res$3 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$3, res$2);
-  var res$4 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$2, res$3);
-  var res$5 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2, res$4);
-  return res$5;
+  var res = $as_T1($m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$6, Tuple_this));
+  var res$2 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$5, res);
+  var res$3 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$4, res$2);
+  var res$4 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$3, res$3);
+  var res$5 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2$2, res$4);
+  var res$6 = $m_sr_Tuples$().cons__O__s_Product__s_Product(x$2, res$5);
+  return res$6;
 });
 $c_Lgame_shared_Player$$anon$1.prototype.fromProduct__s_Product__Lgame_shared_Player = (function(p) {
   return $as_Lgame_shared_Player($n(this.Lgame_shared_Player$$anon$1__f_m$2).fromProduct__s_Product__O(p));
@@ -37747,24 +37846,28 @@ $c_Lgame_shared_Player$$anon$1.prototype.keyToIndex__T__I = (function(x) {
       return 4;
       break;
     }
+    case "online": {
+      return 5;
+      break;
+    }
     default: {
       return (-1);
     }
   }
 });
 $c_Lgame_shared_Player$$anon$1.prototype.allKeysArray__AT = (function() {
-  var this$6 = new $c_sci_$colon$colon(new $c_T2("id", "id"), new $c_sci_$colon$colon(new $c_T2("x", "x"), new $c_sci_$colon$colon(new $c_T2("y", "y"), new $c_sci_$colon$colon(new $c_T2("color", "color"), new $c_sci_$colon$colon(new $c_T2("name", "name"), $m_sci_Nil$())))));
+  var this$7 = new $c_sci_$colon$colon(new $c_T2("id", "id"), new $c_sci_$colon$colon(new $c_T2("x", "x"), new $c_sci_$colon$colon(new $c_T2("y", "y"), new $c_sci_$colon$colon(new $c_T2("color", "color"), new $c_sci_$colon$colon(new $c_T2("name", "name"), new $c_sci_$colon$colon(new $c_T2("online", "online"), $m_sci_Nil$()))))));
   var f = ((_$1) => {
     var _$1$1 = $as_T2(_$1);
     return $as_T($n(_$1$1).T2__f__2);
   });
-  if ((this$6 === $m_sci_Nil$())) {
-    var this$8 = $m_sci_Nil$();
+  if ((this$7 === $m_sci_Nil$())) {
+    var this$9 = $m_sci_Nil$();
   } else {
-    var arg1 = this$6.sci_$colon$colon__f_head;
+    var arg1 = this$7.sci_$colon$colon__f_head;
     var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
     var t = h;
-    var rest = this$6.sci_$colon$colon__f_next;
+    var rest = this$7.sci_$colon$colon__f_next;
     while ((rest !== $m_sci_Nil$())) {
       var arg1$1 = $n(rest).head__O();
       var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
@@ -37772,12 +37875,12 @@ $c_Lgame_shared_Player$$anon$1.prototype.allKeysArray__AT = (function() {
       t = nx;
       rest = $as_sci_List($n(rest).tail__O());
     }
-    var this$8 = h;
+    var this$9 = h;
   }
-  if ((this$8.knownSize__I() >= 0)) {
-    var len = this$8.knownSize__I();
+  if ((this$9.knownSize__I() >= 0)) {
+    var len = this$9.knownSize__I();
     var destination = new ($d_T.getArrayOf().constr)(len);
-    $f_sc_IterableOnceOps__copyToArray__O__I__I__I(this$8, destination, 0, 2147483647);
+    $f_sc_IterableOnceOps__copyToArray__O__I__I__I(this$9, destination, 0, 2147483647);
     return destination;
   } else {
     var capacity = 0;
@@ -37786,7 +37889,7 @@ $c_Lgame_shared_Player$$anon$1.prototype.allKeysArray__AT = (function() {
     capacity = 0;
     size = 0;
     jsElems = [];
-    var it = this$8.iterator__sc_Iterator();
+    var it = this$9.iterator__sc_Iterator();
     while ($n(it).hasNext__Z()) {
       var elem = $n(it).next__O();
       var unboxedElem = ((elem === null) ? null : elem);
