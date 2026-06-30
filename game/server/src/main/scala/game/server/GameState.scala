@@ -14,7 +14,7 @@ val GRID_H      = 20
 val FOOD_COUNT  = 20
 val FOOD_POINTS = 5
 
-val UPGRADE_COSTS  = Map("pathfinder" -> 5, "sprint" -> 15, "bounty" -> 20, "magnet" -> 25, "aura" -> 40)
+val UPGRADE_COSTS  = Map("pathfinder" -> 5, "sprint" -> 15, "bounty" -> 20, "magnet" -> 25, "repel" -> 30, "aura" -> 40)
 val MONSTER_COUNT  = 3
 val MONSTER_DAMAGE = 5
 
@@ -251,7 +251,8 @@ class GameState(
   private def moveMonsters(): IO[Unit] =
     for
       ps <- playersRef.get
-      online = ps.values.filter(_.online).toVector
+      online    = ps.values.filter(_.online).toVector
+      repellers = online.filter(_.upgrades.contains("repel"))
       _ <- monstersRef.update { ms =>
               ms.map { m =>
                 // 50% chase nearest player, 50% random
@@ -264,7 +265,16 @@ class GameState(
                     else if Math.abs(rx) >= Math.abs(ry) then Some((rx.sign, 0))
                     else Some((0, ry.sign))
                 val (dx, dy) = chaseDir.getOrElse(DIRS(Random.nextInt(DIRS.size)))
-                m.copy(x = (m.x + dx).max(0).min(GRID_W - 1), y = (m.y + dy).max(0).min(GRID_H - 1))
+                val moved = m.copy(x = (m.x + dx).max(0).min(GRID_W - 1), y = (m.y + dy).max(0).min(GRID_H - 1))
+                // Repel: push monster 1 step away from each nearby repeller (radius 3)
+                repellers.foldLeft(moved) { (mon, p) =>
+                  val dist = Math.abs(p.x - mon.x) + Math.abs(p.y - mon.y)
+                  if dist > 0 && dist <= 3 then
+                    val rx = mon.x - p.x; val ry = mon.y - p.y
+                    val (pdx, pdy) = if Math.abs(rx) >= Math.abs(ry) then (rx.sign, 0) else (0, ry.sign)
+                    mon.copy(x = (mon.x + pdx).max(0).min(GRID_W - 1), y = (mon.y + pdy).max(0).min(GRID_H - 1))
+                  else mon
+                }
               }
            }
       // Damage any player sharing a cell with a monster
