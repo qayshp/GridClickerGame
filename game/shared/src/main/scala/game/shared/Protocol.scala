@@ -18,6 +18,7 @@ object ClientMsg:
   case class Join(name: String, clientId: String, userId: String) extends ClientMsg derives ReadWriter
   case class Move(dx: Int, dy: Int) extends ClientMsg derives ReadWriter
   case class BuyUpgrade(upgradeId: String) extends ClientMsg derives ReadWriter
+  case class Reset() extends ClientMsg derives ReadWriter
 
 case class FoodPos(x: Int, y: Int) derives ReadWriter
 case class Monster(id: Int, x: Int, y: Int) derives ReadWriter

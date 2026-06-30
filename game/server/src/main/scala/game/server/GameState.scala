@@ -146,6 +146,9 @@ class GameState(
 
     case ClientMsg.Move(_, _) => IO.unit   // movement is server-driven
 
+    case ClientMsg.Reset() =>
+      reset()
+
     case ClientMsg.BuyUpgrade(upgradeId) =>
       val cost = UPGRADE_COSTS.getOrElse(upgradeId, Int.MaxValue)
       for
@@ -323,6 +326,25 @@ class GameState(
       _    <- moveMonsters()
       _    <- wanderOneFood()
       _    <- broadcastCurrent()
+    yield ()
+
+  def reset(): IO[Unit] =
+    val freshFood = initialFood(FOOD_COUNT)
+    for
+      _ <- playersRef.update { ps =>
+             ps.view.mapValues { p =>
+               val (nx, ny) = (Random.nextInt(GRID_W), Random.nextInt(GRID_H))
+               p.copy(points = 0, upgrades = Set.empty, x = nx, y = ny)
+             }.toMap
+           }
+      _ <- foodRef.set(freshFood)
+      _ <- eatenRef.set(Nil)
+      _ <- wanderRef.set(Nil)
+      _ <- monstersRef.set(
+             List.tabulate(MONSTER_COUNT)(i => Monster(i, Random.nextInt(GRID_W), Random.nextInt(GRID_H)))
+           )
+      _ <- tickCountRef.set(0)
+      _ <- broadcastCurrent()
     yield ()
 
   def startTickLoop(): IO[Nothing] =
