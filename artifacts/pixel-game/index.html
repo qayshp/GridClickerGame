@@ -74,16 +74,18 @@
     /* Shop panel */
     #shop-panel {
       display: none;
+      flex-wrap: wrap;
+      justify-content: center;
       align-items: center;
-      gap: 10px;
-      margin-top: 8px;
-      padding: 6px 12px;
+      gap: 6px;
+      margin-top: 6px;
+      padding: 5px 8px;
       background: #0d0d1e;
       border: 1px solid #1e1e40;
       border-radius: 6px;
       flex-shrink: 0;
       width: 100%;
-      max-width: max-content;
+      max-width: 100%;
     }
     .shop-label {
       font-size: 10px;
@@ -94,8 +96,8 @@
     }
     .upgrade-btn {
       font-family: 'Courier New', monospace;
-      font-size: clamp(10px, 2vw, 12px);
-      padding: 4px 12px;
+      font-size: clamp(9px, 1.8vw, 11px);
+      padding: 3px 8px;
       background: #0f0f2e;
       border-radius: 4px;
       cursor: pointer;
