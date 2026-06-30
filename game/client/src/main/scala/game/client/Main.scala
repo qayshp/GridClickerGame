@@ -99,6 +99,9 @@ object Main:
     val mgBtn = dom.document.getElementById("upgrade-magnet-btn")
     if mgBtn != null then
       mgBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("magnet")))
+    val spBtn = dom.document.getElementById("upgrade-sprint-btn")
+    if spBtn != null then
+      spBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("sprint")))
 
     ws.onopen = (_: Event) =>
       connected = true
@@ -161,6 +164,7 @@ object Main:
         b.setAttribute("data-state", "")
 
     setBtn("upgrade-pathfinder-btn", "Pathfinder ★", 5,  "pathfinder")
+    setBtn("upgrade-sprint-btn",     "Sprint ⚡",    15, "sprint")
     setBtn("upgrade-magnet-btn",     "Magnet ◆",    25, "magnet")
 
   def send(msg: ClientMsg): Unit =
@@ -291,22 +295,25 @@ object Main:
 
     ctx.shadowBlur = 0
 
-    // Badges (top-right / top-left corners)
+    // Badges (corners of cell)
     val hasMg = p.upgrades.contains("magnet")
-    if (hasPf || hasMg) && p.online && c >= 14 then
+    val hasSp = p.upgrades.contains("sprint")
+    if (hasPf || hasMg || hasSp) && p.online && c >= 14 then
       val badgeSize = Math.max(8, c / 3)
       ctx.font = s"${badgeSize}px monospace"
       ctx.shadowBlur = 8
-      if hasPf then
+      if hasPf then                          // top-right: gold ★
         ctx.textAlign = "right"
-        ctx.shadowColor = "#ffe84d"
-        ctx.fillStyle   = "#ffe84d"
+        ctx.shadowColor = "#ffe84d"; ctx.fillStyle = "#ffe84d"
         ctx.fillText("★", px + c - 1, py + badgeSize + 1)
-      if hasMg then
+      if hasMg then                          // top-left: cyan ◆
         ctx.textAlign = "left"
-        ctx.shadowColor = "#44ddff"
-        ctx.fillStyle   = "#44ddff"
+        ctx.shadowColor = "#44ddff"; ctx.fillStyle = "#44ddff"
         ctx.fillText("◆", px + 1, py + badgeSize + 1)
+      if hasSp then                          // bottom-right: orange ⚡
+        ctx.textAlign = "right"
+        ctx.shadowColor = "#ff6622"; ctx.fillStyle = "#ff6622"
+        ctx.fillText("⚡", px + c - 1, py + c - 2)
       ctx.shadowBlur = 0
 
     // Name + pts labels
