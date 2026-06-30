@@ -14,7 +14,7 @@ val GRID_H      = 20
 val FOOD_COUNT  = 20
 val FOOD_POINTS = 5
 
-val UPGRADE_COSTS = Map("pathfinder" -> 5, "magnet" -> 25)
+val UPGRADE_COSTS = Map("pathfinder" -> 5, "sprint" -> 15, "magnet" -> 25)
 
 val PLAYER_COLORS = Vector(
   "#e74c3c", "#3498db", "#2ecc71", "#f39c12",
@@ -214,7 +214,8 @@ class GameState(
                 val (dx, dy) =
                   if p.upgrades.contains("pathfinder") then dirTowardFood(p, food, DIRS)
                   else DIRS(Random.nextInt(DIRS.size))
-                movePlayer(p.id, dx, dy)
+                val steps = if p.upgrades.contains("sprint") then 2 else 1
+                List.fill(steps)(()).traverse_(_ => movePlayer(p.id, dx, dy))
               }
       // Magnet: pull second-closest pellet one step toward each owner
       ps2  <- playersRef.get
