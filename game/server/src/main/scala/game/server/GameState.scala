@@ -57,15 +57,25 @@ class GameState(
   connsRef:      Ref[IO, Map[String, Queue[IO, Option[String]]]],
   connPlayerRef: Ref[IO, Map[String, String]],
   colorIdxRef:   Ref[IO, Int],
-  foodRef:       Ref[IO, Set[(Int, Int)]]
+  foodRef:       Ref[IO, Set[(Int, Int)]],
+  eatenRef:      Ref[IO, List[(Int, Int)]],   // positions eaten by players this tick
+  wanderRef:     Ref[IO, List[(Int, Int)]]    // positions that wandered this tick
 ):
   private val DIRS = Vector((0,-1),(0,1),(-1,0),(1,0))
 
   private def broadcastCurrent(): IO[Unit] =
     for
-      ps   <- playersRef.get
-      food <- foodRef.get
-      json  = write(ServerState(ps, food.map(p => FoodPos(p._1, p._2)).toList, GRID_W, GRID_H))
+      ps      <- playersRef.get
+      food    <- foodRef.get
+      eaten   <- eatenRef.get
+      wandered <- wanderRef.get
+      json     = write(ServerState(
+                   ps,
+                   food.map(p => FoodPos(p._1, p._2)).toList,
+                   GRID_W, GRID_H,
+                   eaten.map(p => FoodPos(p._1, p._2)),
+                   wandered.map(p => FoodPos(p._1, p._2))
+                 ))
       conns <- connsRef.get
       _     <- conns.values.toList.parTraverse_(_.offer(Some(json)))
     yield ()
@@ -165,7 +175,7 @@ class GameState(
                                else FOOD_POINTS
                   moved      = p.copy(x = nx, y = ny, points = p.points + 1 + foodBonus)
                   _       <- playersRef.update(_.updated(playerId, moved))
-                  _       <- if ateFood then eatFood(food, nx, ny) else IO.unit
+                  _       <- if ateFood then eatenRef.update(_ :+ (nx, ny)) *> eatFood(food, nx, ny) else IO.unit
                 yield ()
             }
     yield ()
@@ -189,7 +199,7 @@ class GameState(
                 val without = food - picked
                 spawnOne(ps, without) match
                   case None         => IO.unit
-                  case Some(newPos) => foodRef.set(without + newPos)
+                  case Some(newPos) => wanderRef.update(_ :+ picked) *> foodRef.set(without + newPos)
     yield ()
 
   // Collect any food adjacent to p (aura upgrade)
@@ -209,7 +219,7 @@ class GameState(
                             val bonus = if p.upgrades.contains("bounty") then FOOD_POINTS * 2 else FOOD_POINTS
                             playersRef.update { ps =>
                               ps.get(p.id).fold(ps)(c => ps.updated(p.id, c.copy(points = c.points + bonus)))
-                            } *> eatFood(cur, pos._1, pos._2)
+                            } *> eatenRef.update(_ :+ pos) *> eatFood(cur, pos._1, pos._2)
                  yield ()
                }
     yield ()
@@ -232,6 +242,8 @@ class GameState(
 
   def tick(): IO[Unit] =
     for
+      _    <- eatenRef.set(Nil)
+      _    <- wanderRef.set(Nil)
       ps   <- playersRef.get
       food <- foodRef.get   // snapshot for pathfinder direction
       _    <- ps.values.toList.filter(_.online).traverse_ { p =>
@@ -263,4 +275,6 @@ object GameState:
       connPlayer <- Ref.of[IO, Map[String, String]](Map.empty)
       colorIdx   <- Ref.of[IO, Int](0)
       food       <- Ref.of[IO, Set[(Int, Int)]](initialFood(FOOD_COUNT))
-    yield GameState(players, conns, connPlayer, colorIdx, food)
+      eaten      <- Ref.of[IO, List[(Int, Int)]](Nil)
+      wandered   <- Ref.of[IO, List[(Int, Int)]](Nil)
+    yield GameState(players, conns, connPlayer, colorIdx, food, eaten, wandered)

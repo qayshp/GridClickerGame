@@ -8,19 +8,21 @@ import upickle.default.*
 import scala.scalajs.js
 
 case class EatAnim(x: Int, y: Int, startMs: Double)
+case class WanderAnim(x: Int, y: Int, startMs: Double)
 
 object Main:
-  val GRID_W   = 30
-  val GRID_H   = 20
-  val MAX_CELL = 28
-  val MIN_CELL = 8
-  val ANIM_DUR = 500.0
+  val GRID_W      = 30
+  val GRID_H      = 20
+  val MAX_CELL    = 28
+  val MIN_CELL    = 8
+  val ANIM_DUR    = 500.0
+  val WANDER_DUR  = 280.0
 
   var cell: Int = MAX_CELL
   var players: Map[String, Player] = Map.empty
   var food: List[FoodPos]          = Nil
-  var prevFood: Set[(Int, Int)]     = Set.empty
-  var eatAnims: List[EatAnim]       = Nil
+  var eatAnims: List[EatAnim]      = Nil
+  var wanderAnims: List[WanderAnim] = Nil
   var animating: Boolean            = false
   var myId: String  = ""
   var ws: WebSocket = null
@@ -120,17 +122,16 @@ object Main:
 
     ws.onmessage = (e: MessageEvent) =>
       val state      = read[ServerState](e.data.toString)
-      val newFoodSet = state.food.map(f => (f.x, f.y)).toSet
-      val eaten      = prevFood -- newFoodSet
       val now        = dom.window.performance.now()
-      val newAnims   = eaten.map(pos => EatAnim(pos._1, pos._2, now)).toList
+      val newEats    = state.eaten.map(f => EatAnim(f.x, f.y, now))
+      val newWanders = state.wandered.map(f => WanderAnim(f.x, f.y, now))
 
-      players  = state.players
-      food     = state.food
-      prevFood = newFoodSet
+      players = state.players
+      food    = state.food
 
-      if newAnims.nonEmpty then
-        eatAnims = eatAnims.filter(a => now - a.startMs < ANIM_DUR) ++ newAnims
+      if newEats.nonEmpty || newWanders.nonEmpty then
+        eatAnims    = eatAnims.filter(a => now - a.startMs < ANIM_DUR) ++ newEats
+        wanderAnims = wanderAnims.filter(a => now - a.startMs < WANDER_DUR) ++ newWanders
         kickAnims(ctx, canvas)
 
       updateLeaderboard(state.players)
@@ -198,15 +199,16 @@ object Main:
   // ---------- animation loop ----------
 
   def kickAnims(ctx: CanvasRenderingContext2D, canvas: Canvas): Unit =
-    if !animating && eatAnims.nonEmpty then
+    if !animating && (eatAnims.nonEmpty || wanderAnims.nonEmpty) then
       animating = true
       dom.window.requestAnimationFrame((_: Double) => tickAnims(ctx, canvas))
 
   def tickAnims(ctx: CanvasRenderingContext2D, canvas: Canvas): Unit =
     val now = dom.window.performance.now()
-    eatAnims = eatAnims.filter(a => now - a.startMs < ANIM_DUR)
+    eatAnims    = eatAnims.filter(a => now - a.startMs < ANIM_DUR)
+    wanderAnims = wanderAnims.filter(a => now - a.startMs < WANDER_DUR)
     renderFrame(ctx, canvas)
-    if eatAnims.nonEmpty then
+    if eatAnims.nonEmpty || wanderAnims.nonEmpty then
       dom.window.requestAnimationFrame((_: Double) => tickAnims(ctx, canvas))
     else
       animating = false
@@ -232,7 +234,23 @@ object Main:
     for (_, p) <- players do drawPlayer(ctx, p, p.id == myId, c)
 
     val now = dom.window.performance.now()
+    for a <- wanderAnims do drawWanderAnim(ctx, a, c, now)
     for a <- eatAnims do drawEatAnim(ctx, a, c, now)
+
+  def drawWanderAnim(ctx: CanvasRenderingContext2D, a: WanderAnim, c: Int, now: Double): Unit =
+    val t   = ((now - a.startMs) / WANDER_DUR).min(1.0)
+    val cx  = a.x * c + c / 2.0
+    val cy  = a.y * c + c / 2.0
+    val r   = (1.0 - t * 0.6) * c * 0.38
+    ctx.save()
+    ctx.globalAlpha = (1.0 - t) * 0.45
+    ctx.strokeStyle = "#9988bb"
+    ctx.lineWidth   = 1.2
+    ctx.beginPath(); ctx.arc(cx, cy, r.max(1), 0, 2 * Math.PI); ctx.stroke()
+    ctx.globalAlpha = (1.0 - t) * 0.2
+    ctx.fillStyle = "#6655aa"
+    ctx.beginPath(); ctx.arc(cx, cy, (r * 0.5).max(1), 0, 2 * Math.PI); ctx.fill()
+    ctx.restore()
 
   def drawEatAnim(ctx: CanvasRenderingContext2D, a: EatAnim, c: Int, now: Double): Unit =
     val t     = ((now - a.startMs) / ANIM_DUR).min(1.0)

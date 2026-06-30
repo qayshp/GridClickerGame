@@ -25,5 +25,7 @@ case class ServerState(
   players: Map[String, Player],
   food: List[FoodPos],
   gridW: Int,
-  gridH: Int
+  gridH: Int,
+  eaten: List[FoodPos],    // pellets consumed by a player this tick
+  wandered: List[FoodPos]  // pellets that moved randomly this tick
 ) derives ReadWriter
