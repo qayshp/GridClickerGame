@@ -14,7 +14,7 @@ val GRID_H      = 20
 val FOOD_COUNT  = 20
 val FOOD_POINTS = 5
 
-val UPGRADE_COSTS  = Map("pathfinder" -> 5, "sprint" -> 15, "bounty" -> 20, "magnet" -> 25, "repel" -> 30, "aura" -> 40)
+val UPGRADE_COSTS  = Map("pathfinder" -> 5, "sprint" -> 15, "bounty" -> 20, "magnet" -> 25, "repel" -> 30, "aura" -> 40, "blink" -> 60)
 val MONSTER_COUNT  = 3
 val MONSTER_DAMAGE = 5
 
@@ -277,16 +277,26 @@ class GameState(
                 }
               }
            }
-      // Damage any player sharing a cell with a monster
-      ms  <- monstersRef.get
-      mPos = ms.map(m => (m.x, m.y)).toSet
-      _   <- playersRef.update { ps =>
-                ps.view.mapValues { p =>
-                  if p.online && mPos.contains((p.x, p.y))
-                  then p.copy(points = (p.points - MONSTER_DAMAGE).max(0))
-                  else p
-                }.toMap
-              }
+      // Damage (or blink) any player sharing a cell with a monster
+      ms     <- monstersRef.get
+      mPos    = ms.map(m => (m.x, m.y)).toSet
+      food   <- foodRef.get
+      curPs  <- playersRef.get
+      hitList = curPs.values.filter(p => p.online && mPos.contains((p.x, p.y))).toList
+      _      <- hitList.traverse_ { p =>
+                   if p.upgrades.contains("blink") then
+                     // Teleport to a random free cell (excludes players, food, and monster positions)
+                     val othersMap = curPs.view.filterKeys(_ != p.id).toMap
+                     spawnOne(othersMap, food ++ mPos) match
+                       case None         => IO.unit   // grid full — no damage, no move
+                       case Some((tx,ty)) =>
+                         playersRef.update(_.updated(p.id, p.copy(x = tx, y = ty)))
+                   else
+                     playersRef.update { ps =>
+                       val cur = ps.getOrElse(p.id, p)
+                       ps.updated(p.id, cur.copy(points = (cur.points - MONSTER_DAMAGE).max(0)))
+                     }
+                 }
     yield ()
 
   def tick(): IO[Unit] =

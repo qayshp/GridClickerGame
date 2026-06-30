@@ -115,6 +115,9 @@ object Main:
     val rpBtn = dom.document.getElementById("upgrade-repel-btn")
     if rpBtn != null then
       rpBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("repel")))
+    val blBtn = dom.document.getElementById("upgrade-blink-btn")
+    if blBtn != null then
+      blBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("blink")))
 
     ws.onopen = (_: Event) =>
       connected = true
@@ -184,6 +187,7 @@ object Main:
     setBtn("upgrade-magnet-btn",     "Magnet ◆",    "Pulls a pellet 1 step closer/tick",    25, "magnet")
     setBtn("upgrade-aura-btn",       "Aura ◉",      "Auto-eats adjacent food after moving", 40, "aura")
     setBtn("upgrade-repel-btn",      "Repel ⊗",     "Pushes monsters away within 3 squares", 30, "repel")
+    setBtn("upgrade-blink-btn",      "Blink ◈",     "Teleport away instead of taking damage", 60, "blink")
 
   def updateLeaderboard(ps: Map[String, Player]): Unit =
     val el = dom.document.getElementById("leaderboard")
@@ -360,6 +364,18 @@ object Main:
     val hasPf = p.upgrades.contains("pathfinder")
 
     ctx.save()
+
+    // Blink ring — teal, outermost (drawn first)
+    val hasBl = p.upgrades.contains("blink")
+    if hasBl && p.online then
+      ctx.globalAlpha = 0.22
+      ctx.strokeStyle = "#00ccee"
+      ctx.lineWidth   = 1.5
+      ctx.strokeRect(px - 5, py - 5, c + 10, c + 10)
+      ctx.globalAlpha = 0.07
+      ctx.fillStyle   = "#00aacc"
+      ctx.fillRect(px - 5, py - 5, c + 10, c + 10)
+      ctx.globalAlpha = 1.0
 
     // Repel ring — blue, slightly larger than cell (drawn first)
     val hasRp = p.upgrades.contains("repel")
