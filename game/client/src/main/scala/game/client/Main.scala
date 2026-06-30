@@ -102,6 +102,12 @@ object Main:
     val spBtn = dom.document.getElementById("upgrade-sprint-btn")
     if spBtn != null then
       spBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("sprint")))
+    val bnBtn = dom.document.getElementById("upgrade-bounty-btn")
+    if bnBtn != null then
+      bnBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("bounty")))
+    val auBtn = dom.document.getElementById("upgrade-aura-btn")
+    if auBtn != null then
+      auBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("aura")))
 
     ws.onopen = (_: Event) =>
       connected = true
@@ -165,7 +171,9 @@ object Main:
 
     setBtn("upgrade-pathfinder-btn", "Pathfinder ★", 5,  "pathfinder")
     setBtn("upgrade-sprint-btn",     "Sprint ⚡",    15, "sprint")
+    setBtn("upgrade-bounty-btn",     "Bounty ✦",    20, "bounty")
     setBtn("upgrade-magnet-btn",     "Magnet ◆",    25, "magnet")
+    setBtn("upgrade-aura-btn",       "Aura ◉",      40, "aura")
 
   def send(msg: ClientMsg): Unit =
     if ws != null && ws.readyState == WebSocket.OPEN then
@@ -267,6 +275,15 @@ object Main:
 
     ctx.save()
 
+    // Aura ring (drawn first, behind everything)
+    val hasAu = p.upgrades.contains("aura")
+    if hasAu && p.online then
+      ctx.globalAlpha = if !p.online then 0.1 else 0.28
+      ctx.strokeStyle = "#88ff88"
+      ctx.lineWidth   = 2
+      ctx.strokeRect(px - 1, py - 1, c + 2, c + 2)
+      ctx.globalAlpha = 1.0
+
     if !p.online then ctx.globalAlpha = 0.35
 
     if isMe && p.online then
@@ -295,10 +312,11 @@ object Main:
 
     ctx.shadowBlur = 0
 
-    // Badges (corners of cell)
+    // Corner badges
     val hasMg = p.upgrades.contains("magnet")
     val hasSp = p.upgrades.contains("sprint")
-    if (hasPf || hasMg || hasSp) && p.online && c >= 14 then
+    val hasBn = p.upgrades.contains("bounty")
+    if (hasPf || hasMg || hasSp || hasBn || hasAu) && p.online && c >= 14 then
       val badgeSize = Math.max(8, c / 3)
       ctx.font = s"${badgeSize}px monospace"
       ctx.shadowBlur = 8
@@ -314,6 +332,10 @@ object Main:
         ctx.textAlign = "right"
         ctx.shadowColor = "#ff6622"; ctx.fillStyle = "#ff6622"
         ctx.fillText("⚡", px + c - 1, py + c - 2)
+      if hasBn then                          // bottom-left: purple ✦
+        ctx.textAlign = "left"
+        ctx.shadowColor = "#bb44ff"; ctx.fillStyle = "#bb44ff"
+        ctx.fillText("✦", px + 1, py + c - 2)
       ctx.shadowBlur = 0
 
     // Name + pts labels
