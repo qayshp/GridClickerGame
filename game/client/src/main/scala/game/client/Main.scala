@@ -122,9 +122,8 @@ object Main:
       val state      = read[ServerState](e.data.toString)
       val newFoodSet = state.food.map(f => (f.x, f.y)).toSet
       val eaten      = prevFood -- newFoodSet
-      val onlinePos  = state.players.values.filter(_.online).map(p => (p.x, p.y)).toSet
       val now        = dom.window.performance.now()
-      val newAnims   = eaten.filter(onlinePos.contains).map(pos => EatAnim(pos._1, pos._2, now)).toList
+      val newAnims   = eaten.map(pos => EatAnim(pos._1, pos._2, now)).toList
 
       players  = state.players
       food     = state.food
@@ -134,6 +133,7 @@ object Main:
         eatAnims = eatAnims.filter(a => now - a.startMs < ANIM_DUR) ++ newAnims
         kickAnims(ctx, canvas)
 
+      updateLeaderboard(state.players)
       players.get(myId).foreach { me =>
         val pts = s"${me.points} pts"
         status.textContent =
@@ -152,28 +152,44 @@ object Main:
       status.textContent = "Connection error."
 
   def updateShopUI(me: Player): Unit =
-    def setBtn(id: String, label: String, cost: Int, upgradeId: String): Unit =
+    def setBtn(id: String, label: String, desc: String, cost: Int, upgradeId: String): Unit =
       val el = dom.document.getElementById(id)
       if el == null then return
       val b = el.asInstanceOf[html.Button]
+      val d = s"""<span class="btn-desc">$desc</span>"""
       if me.upgrades.contains(upgradeId) then
-        b.textContent = s"$label  (owned)"
+        b.innerHTML = s"""$label &nbsp;<span class="btn-owned">(owned)</span>$d"""
         b.disabled = true
         b.setAttribute("data-state", "owned")
       else if me.points >= cost then
-        b.textContent = s"$label  —  $cost pts"
+        b.innerHTML = s"$label &mdash; $cost pts$d"
         b.disabled = false
         b.setAttribute("data-state", "")
       else
-        b.textContent = s"$label  —  $cost pts  (need ${cost - me.points} more)"
+        b.innerHTML = s"""$label &mdash; $cost pts &nbsp;<span class="btn-need">need ${cost - me.points} more</span>$d"""
         b.disabled = true
         b.setAttribute("data-state", "")
 
-    setBtn("upgrade-pathfinder-btn", "Pathfinder ★", 5,  "pathfinder")
-    setBtn("upgrade-sprint-btn",     "Sprint ⚡",    15, "sprint")
-    setBtn("upgrade-bounty-btn",     "Bounty ✦",    20, "bounty")
-    setBtn("upgrade-magnet-btn",     "Magnet ◆",    25, "magnet")
-    setBtn("upgrade-aura-btn",       "Aura ◉",      40, "aura")
+    setBtn("upgrade-pathfinder-btn", "Pathfinder ★", "Moves toward nearest food",           5,  "pathfinder")
+    setBtn("upgrade-sprint-btn",     "Sprint ⚡",    "2 squares/tick, eats both",            15, "sprint")
+    setBtn("upgrade-bounty-btn",     "Bounty ✦",    "Food pays 10 pts instead of 5",        20, "bounty")
+    setBtn("upgrade-magnet-btn",     "Magnet ◆",    "Pulls a pellet 1 step closer/tick",    25, "magnet")
+    setBtn("upgrade-aura-btn",       "Aura ◉",      "Auto-eats adjacent food after moving", 40, "aura")
+
+  def updateLeaderboard(ps: Map[String, Player]): Unit =
+    val el = dom.document.getElementById("leaderboard")
+    if el == null then return
+    val sorted = ps.values.toList.sortWith { (a, b) =>
+      if a.online != b.online then a.online
+      else a.points > b.points
+    }
+    val chips = sorted.map { p =>
+      val you  = if p.id == myId then """ <span class="lb-you">(you)</span>""" else ""
+      val dot  = if p.online then """<span class="lb-dot on">●</span>""" else """<span class="lb-dot off">○</span>"""
+      val cls  = if p.online then "" else " lb-offline"
+      s"""<span class="lb-chip$cls">$dot ${p.name}$you <span class="lb-score">${p.points}</span></span>"""
+    }.mkString
+    el.innerHTML = s"""<span class="lb-label">Players</span>$chips"""
 
   def send(msg: ClientMsg): Unit =
     if ws != null && ws.readyState == WebSocket.OPEN then
