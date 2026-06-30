@@ -112,6 +112,9 @@ object Main:
     val auBtn = dom.document.getElementById("upgrade-aura-btn")
     if auBtn != null then
       auBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("aura")))
+    val rpBtn = dom.document.getElementById("upgrade-repel-btn")
+    if rpBtn != null then
+      rpBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("repel")))
 
     ws.onopen = (_: Event) =>
       connected = true
@@ -180,6 +183,7 @@ object Main:
     setBtn("upgrade-bounty-btn",     "Bounty ✦",    "Food pays 10 pts instead of 5",        20, "bounty")
     setBtn("upgrade-magnet-btn",     "Magnet ◆",    "Pulls a pellet 1 step closer/tick",    25, "magnet")
     setBtn("upgrade-aura-btn",       "Aura ◉",      "Auto-eats adjacent food after moving", 40, "aura")
+    setBtn("upgrade-repel-btn",      "Repel ⊗",     "Pushes monsters away within 3 squares", 30, "repel")
 
   def updateLeaderboard(ps: Map[String, Player]): Unit =
     val el = dom.document.getElementById("leaderboard")
@@ -357,10 +361,22 @@ object Main:
 
     ctx.save()
 
+    // Repel ring — blue, slightly larger than cell (drawn first)
+    val hasRp = p.upgrades.contains("repel")
+    if hasRp && p.online then
+      ctx.globalAlpha = 0.30
+      ctx.strokeStyle = "#4488ff"
+      ctx.lineWidth   = 1.5
+      ctx.strokeRect(px - 3, py - 3, c + 6, c + 6)
+      ctx.globalAlpha = 0.10
+      ctx.fillStyle   = "#2266cc"
+      ctx.fillRect(px - 3, py - 3, c + 6, c + 6)
+      ctx.globalAlpha = 1.0
+
     // Aura ring (drawn first, behind everything)
     val hasAu = p.upgrades.contains("aura")
     if hasAu && p.online then
-      ctx.globalAlpha = if !p.online then 0.1 else 0.28
+      ctx.globalAlpha = 0.28
       ctx.strokeStyle = "#88ff88"
       ctx.lineWidth   = 2
       ctx.strokeRect(px - 1, py - 1, c + 2, c + 2)
