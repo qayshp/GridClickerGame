@@ -62,7 +62,8 @@ class GameState(
   foodRef:       Ref[IO, Set[(Int, Int)]],
   eatenRef:      Ref[IO, List[(Int, Int)]],
   wanderRef:     Ref[IO, List[(Int, Int)]],
-  monstersRef:   Ref[IO, List[Monster]]
+  monstersRef:   Ref[IO, List[Monster]],
+  tickCountRef:  Ref[IO, Int]
 ):
   private val DIRS = Vector((0,-1),(0,1),(-1,0),(1,0))
 
@@ -73,13 +74,15 @@ class GameState(
       eaten    <- eatenRef.get
       wandered <- wanderRef.get
       monsters <- monstersRef.get
+      ticks    <- tickCountRef.get
       json      = write(ServerState(
                     ps,
                     food.map(p => FoodPos(p._1, p._2)).toList,
                     GRID_W, GRID_H,
                     eaten.map(p => FoodPos(p._1, p._2)),
                     wandered.map(p => FoodPos(p._1, p._2)),
-                    monsters
+                    monsters,
+                    ticks
                   ))
       conns <- connsRef.get
       _     <- conns.values.toList.parTraverse_(_.offer(Some(json)))
@@ -278,6 +281,7 @@ class GameState(
 
   def tick(): IO[Unit] =
     for
+      _    <- tickCountRef.update(_ + 1)
       _    <- eatenRef.set(Nil)
       _    <- wanderRef.set(Nil)
       ps   <- playersRef.get
@@ -316,4 +320,5 @@ object GameState:
       wandered   <- Ref.of[IO, List[(Int, Int)]](Nil)
       initMs      = List.tabulate(MONSTER_COUNT)(i => Monster(i, Random.nextInt(GRID_W), Random.nextInt(GRID_H)))
       monsters   <- Ref.of[IO, List[Monster]](initMs)
-    yield GameState(players, conns, connPlayer, colorIdx, food, eaten, wandered, monsters)
+      tickCount  <- Ref.of[IO, Int](0)
+    yield GameState(players, conns, connPlayer, colorIdx, food, eaten, wandered, monsters, tickCount)

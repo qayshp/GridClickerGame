@@ -22,6 +22,7 @@ object Main:
   var players: Map[String, Player]  = Map.empty
   var food: List[FoodPos]           = Nil
   var monsters: List[Monster]       = Nil
+  var tickCount: Int                = 0
   var eatAnims: List[EatAnim]       = Nil
   var wanderAnims: List[WanderAnim] = Nil
   var animating: Boolean            = false
@@ -127,9 +128,10 @@ object Main:
       val newEats    = state.eaten.map(f => EatAnim(f.x, f.y, now))
       val newWanders = state.wandered.map(f => WanderAnim(f.x, f.y, now))
 
-      players  = state.players
-      food     = state.food
-      monsters = state.monsters
+      players   = state.players
+      food      = state.food
+      monsters  = state.monsters
+      tickCount = state.tick
 
       if newEats.nonEmpty || newWanders.nonEmpty then
         eatAnims    = eatAnims.filter(a => now - a.startMs < ANIM_DUR) ++ newEats
@@ -239,6 +241,14 @@ object Main:
     val now = dom.window.performance.now()
     for a <- wanderAnims do drawWanderAnim(ctx, a, c, now)
     for a <- eatAnims do drawEatAnim(ctx, a, c, now)
+
+    // Tick counter — bottom-right corner of canvas
+    ctx.save()
+    ctx.font      = s"${Math.max(7, c / 4)}px monospace"
+    ctx.fillStyle = "#2a2a55"
+    ctx.textAlign = "right"
+    ctx.fillText(s"tick $tickCount", w - 4, h - 4)
+    ctx.restore()
 
   def drawMonster(ctx: CanvasRenderingContext2D, m: Monster, c: Int): Unit =
     val mx  = m.x * c
