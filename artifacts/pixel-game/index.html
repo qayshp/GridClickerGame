@@ -102,10 +102,15 @@
       border-radius: 4px;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
-      white-space: nowrap;
+      white-space: normal;
+      text-align: center;
+      line-height: 1.3;
     }
     .upgrade-btn:hover:not(:disabled) { background: #1a1a44; }
     .upgrade-btn:disabled { cursor: default; opacity: 0.55; }
+    .btn-desc { display: block; font-size: 8px; opacity: 0.55; margin-top: 1px; }
+    .btn-owned { font-style: normal; opacity: 0.7; }
+    .btn-need { font-size: 0.85em; opacity: 0.7; }
     #upgrade-pathfinder-btn { color: #ffe84d; border: 1px solid #665500; }
     #upgrade-pathfinder-btn:hover:not(:disabled) { border-color: #ffe84d; }
     #upgrade-pathfinder-btn[data-state="owned"] { border-color: #ffe84d; opacity: 1; }
@@ -122,8 +127,45 @@
     #upgrade-aura-btn:hover:not(:disabled) { border-color: #88ff88; }
     #upgrade-aura-btn[data-state="owned"] { border-color: #88ff88; opacity: 1; }
 
+    /* Leaderboard */
+    #leaderboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 4px 10px;
+      width: 100%;
+      margin-top: 5px;
+      flex-shrink: 0;
+      min-height: 18px;
+    }
+    .lb-label {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: #4444aa;
+      text-transform: uppercase;
+    }
+    .lb-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: clamp(9px, 1.8vw, 11px);
+      color: #ccccee;
+      background: #0d0d1e;
+      border: 1px solid #1e1e40;
+      border-radius: 3px;
+      padding: 1px 6px;
+    }
+    .lb-chip.lb-offline { color: #555577; border-color: #111130; }
+    .lb-dot { font-size: 7px; }
+    .lb-dot.on { color: #44ff88; }
+    .lb-dot.off { color: #333355; }
+    .lb-score { color: #ffe84d; margin-left: 2px; }
+    .lb-offline .lb-score { color: #776644; }
+    .lb-you { color: #aaaaff; font-size: 0.85em; }
+
     footer {
-      margin-top: 8px;
+      margin-top: 6px;
       font-size: clamp(9px, 2vw, 11px);
       color: #444466;
       text-align: center;
@@ -153,6 +195,7 @@
     <button id="upgrade-magnet-btn"     class="upgrade-btn" disabled>Magnet ◆  —  25 pts</button>
     <button id="upgrade-aura-btn"       class="upgrade-btn" disabled>Aura ◉  —  40 pts</button>
   </div>
+  <div id="leaderboard"></div>
   <footer>
     Players move automatically every second &nbsp;·&nbsp;
     Eat yellow pellets for bonus points &nbsp;·&nbsp;
