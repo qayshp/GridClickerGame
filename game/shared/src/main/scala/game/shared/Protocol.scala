@@ -20,6 +20,7 @@ object ClientMsg:
   case class BuyUpgrade(upgradeId: String) extends ClientMsg derives ReadWriter
 
 case class FoodPos(x: Int, y: Int) derives ReadWriter
+case class Monster(id: Int, x: Int, y: Int) derives ReadWriter
 
 case class ServerState(
   players: Map[String, Player],
@@ -27,5 +28,6 @@ case class ServerState(
   gridW: Int,
   gridH: Int,
   eaten: List[FoodPos],    // pellets consumed by a player this tick
-  wandered: List[FoodPos]  // pellets that moved randomly this tick
+  wandered: List[FoodPos], // pellets that moved randomly this tick
+  monsters: List[Monster]
 ) derives ReadWriter

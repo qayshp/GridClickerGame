@@ -14,7 +14,9 @@ val GRID_H      = 20
 val FOOD_COUNT  = 20
 val FOOD_POINTS = 5
 
-val UPGRADE_COSTS = Map("pathfinder" -> 5, "sprint" -> 15, "bounty" -> 20, "magnet" -> 25, "aura" -> 40)
+val UPGRADE_COSTS  = Map("pathfinder" -> 5, "sprint" -> 15, "bounty" -> 20, "magnet" -> 25, "aura" -> 40)
+val MONSTER_COUNT  = 3
+val MONSTER_DAMAGE = 5
 
 val PLAYER_COLORS = Vector(
   "#e74c3c", "#3498db", "#2ecc71", "#f39c12",
@@ -58,24 +60,27 @@ class GameState(
   connPlayerRef: Ref[IO, Map[String, String]],
   colorIdxRef:   Ref[IO, Int],
   foodRef:       Ref[IO, Set[(Int, Int)]],
-  eatenRef:      Ref[IO, List[(Int, Int)]],   // positions eaten by players this tick
-  wanderRef:     Ref[IO, List[(Int, Int)]]    // positions that wandered this tick
+  eatenRef:      Ref[IO, List[(Int, Int)]],
+  wanderRef:     Ref[IO, List[(Int, Int)]],
+  monstersRef:   Ref[IO, List[Monster]]
 ):
   private val DIRS = Vector((0,-1),(0,1),(-1,0),(1,0))
 
   private def broadcastCurrent(): IO[Unit] =
     for
-      ps      <- playersRef.get
-      food    <- foodRef.get
-      eaten   <- eatenRef.get
+      ps       <- playersRef.get
+      food     <- foodRef.get
+      eaten    <- eatenRef.get
       wandered <- wanderRef.get
-      json     = write(ServerState(
-                   ps,
-                   food.map(p => FoodPos(p._1, p._2)).toList,
-                   GRID_W, GRID_H,
-                   eaten.map(p => FoodPos(p._1, p._2)),
-                   wandered.map(p => FoodPos(p._1, p._2))
-                 ))
+      monsters <- monstersRef.get
+      json      = write(ServerState(
+                    ps,
+                    food.map(p => FoodPos(p._1, p._2)).toList,
+                    GRID_W, GRID_H,
+                    eaten.map(p => FoodPos(p._1, p._2)),
+                    wandered.map(p => FoodPos(p._1, p._2)),
+                    monsters
+                  ))
       conns <- connsRef.get
       _     <- conns.values.toList.parTraverse_(_.offer(Some(json)))
     yield ()
@@ -240,6 +245,37 @@ class GameState(
         if otherFood.contains(newPos) then food   // blocked — leave in place
         else otherFood + newPos
 
+  private def moveMonsters(): IO[Unit] =
+    for
+      ps <- playersRef.get
+      online = ps.values.filter(_.online).toVector
+      _ <- monstersRef.update { ms =>
+              ms.map { m =>
+                // 50% chase nearest player, 50% random
+                val chaseDir =
+                  if online.isEmpty || Random.nextDouble() < 0.5 then None
+                  else
+                    val t  = online.minBy(p => Math.abs(p.x - m.x) + Math.abs(p.y - m.y))
+                    val rx = t.x - m.x; val ry = t.y - m.y
+                    if rx == 0 && ry == 0 then None
+                    else if Math.abs(rx) >= Math.abs(ry) then Some((rx.sign, 0))
+                    else Some((0, ry.sign))
+                val (dx, dy) = chaseDir.getOrElse(DIRS(Random.nextInt(DIRS.size)))
+                m.copy(x = (m.x + dx).max(0).min(GRID_W - 1), y = (m.y + dy).max(0).min(GRID_H - 1))
+              }
+           }
+      // Damage any player sharing a cell with a monster
+      ms  <- monstersRef.get
+      mPos = ms.map(m => (m.x, m.y)).toSet
+      _   <- playersRef.update { ps =>
+                ps.view.mapValues { p =>
+                  if p.online && mPos.contains((p.x, p.y))
+                  then p.copy(points = (p.points - MONSTER_DAMAGE).max(0))
+                  else p
+                }.toMap
+              }
+    yield ()
+
   def tick(): IO[Unit] =
     for
       _    <- eatenRef.set(Nil)
@@ -260,6 +296,7 @@ class GameState(
       _    <- ps2.values.toList.filter(p => p.online && p.upgrades.contains("magnet")).traverse_ { p =>
                 foodRef.update(applyMagnet(p, _))
               }
+      _    <- moveMonsters()
       _    <- wanderOneFood()
       _    <- broadcastCurrent()
     yield ()
@@ -277,4 +314,6 @@ object GameState:
       food       <- Ref.of[IO, Set[(Int, Int)]](initialFood(FOOD_COUNT))
       eaten      <- Ref.of[IO, List[(Int, Int)]](Nil)
       wandered   <- Ref.of[IO, List[(Int, Int)]](Nil)
-    yield GameState(players, conns, connPlayer, colorIdx, food, eaten, wandered)
+      initMs      = List.tabulate(MONSTER_COUNT)(i => Monster(i, Random.nextInt(GRID_W), Random.nextInt(GRID_H)))
+      monsters   <- Ref.of[IO, List[Monster]](initMs)
+    yield GameState(players, conns, connPlayer, colorIdx, food, eaten, wandered, monsters)

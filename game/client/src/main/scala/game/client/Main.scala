@@ -19,9 +19,10 @@ object Main:
   val WANDER_DUR  = 280.0
 
   var cell: Int = MAX_CELL
-  var players: Map[String, Player] = Map.empty
-  var food: List[FoodPos]          = Nil
-  var eatAnims: List[EatAnim]      = Nil
+  var players: Map[String, Player]  = Map.empty
+  var food: List[FoodPos]           = Nil
+  var monsters: List[Monster]       = Nil
+  var eatAnims: List[EatAnim]       = Nil
   var wanderAnims: List[WanderAnim] = Nil
   var animating: Boolean            = false
   var myId: String  = ""
@@ -126,8 +127,9 @@ object Main:
       val newEats    = state.eaten.map(f => EatAnim(f.x, f.y, now))
       val newWanders = state.wandered.map(f => WanderAnim(f.x, f.y, now))
 
-      players = state.players
-      food    = state.food
+      players  = state.players
+      food     = state.food
+      monsters = state.monsters
 
       if newEats.nonEmpty || newWanders.nonEmpty then
         eatAnims    = eatAnims.filter(a => now - a.startMs < ANIM_DUR) ++ newEats
@@ -231,11 +233,47 @@ object Main:
       ctx.beginPath(); ctx.moveTo(0, y * c); ctx.lineTo(w, y * c); ctx.stroke()
 
     for f <- food do drawFood(ctx, f, c)
+    for m <- monsters do drawMonster(ctx, m, c)
     for (_, p) <- players do drawPlayer(ctx, p, p.id == myId, c)
 
     val now = dom.window.performance.now()
     for a <- wanderAnims do drawWanderAnim(ctx, a, c, now)
     for a <- eatAnims do drawEatAnim(ctx, a, c, now)
+
+  def drawMonster(ctx: CanvasRenderingContext2D, m: Monster, c: Int): Unit =
+    val mx  = m.x * c
+    val my  = m.y * c
+    val pad = (c / 6).max(1)
+    val bw  = c - pad * 2
+    val bh  = c - pad * 2
+
+    ctx.save()
+    ctx.shadowColor = "#ff2200"; ctx.shadowBlur = 14
+
+    // Body — dark red
+    ctx.fillStyle = "#771100"
+    ctx.fillRect(mx + pad, my + pad, bw, bh)
+
+    // Upper highlight
+    ctx.fillStyle = "#bb1100"
+    ctx.fillRect(mx + pad, my + pad, bw, bh / 2)
+
+    // Jagged bottom edge (teeth)
+    ctx.fillStyle = "#0d0d1a"
+    val teeth = 3
+    val tw    = bw / (teeth * 2)
+    for i <- 0 until teeth do
+      ctx.fillRect(mx + pad + i * tw * 2, my + pad + bh - (c / 5).max(2), tw, (c / 5).max(2))
+
+    // Eyes — glowing orange
+    ctx.shadowColor = "#ffaa00"; ctx.shadowBlur = 10
+    ctx.fillStyle   = "#ffcc00"
+    val ew = (c / 7).max(2)
+    val ey = my + pad + bh * 2 / 5
+    ctx.fillRect(mx + pad + bw / 4 - ew / 2, ey, ew, ew)
+    ctx.fillRect(mx + pad + bw * 3 / 4 - ew / 2, ey, ew, ew)
+
+    ctx.restore()
 
   def drawWanderAnim(ctx: CanvasRenderingContext2D, a: WanderAnim, c: Int, now: Double): Unit =
     val t   = ((now - a.startMs) / WANDER_DUR).min(1.0)
