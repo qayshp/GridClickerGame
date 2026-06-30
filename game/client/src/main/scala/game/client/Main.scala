@@ -118,6 +118,12 @@ object Main:
     val blBtn = dom.document.getElementById("upgrade-blink-btn")
     if blBtn != null then
       blBtn.addEventListener("click", (_: dom.Event) => send(ClientMsg.BuyUpgrade("blink")))
+    val rstBtn = dom.document.getElementById("reset-btn")
+    if rstBtn != null then
+      rstBtn.addEventListener("click", (_: dom.Event) =>
+        if dom.window.confirm("Reset the game? All scores, upgrades, food, and monsters will be reset for everyone.") then
+          send(ClientMsg.Reset())
+      )
 
     ws.onopen = (_: Event) =>
       connected = true

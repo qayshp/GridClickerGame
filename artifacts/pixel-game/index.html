@@ -132,6 +132,22 @@
     #upgrade-blink-btn:hover:not(:disabled) { border-color: #00ccee; }
     #upgrade-blink-btn[data-state="owned"] { border-color: #00ccee; opacity: 1; }
 
+    #reset-btn {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 7px 0;
+      background: #1a0a0a;
+      color: #ff5555;
+      border: 1px solid #552222;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    #reset-btn:hover { border-color: #ff5555; background: #2a0a0a; }
+
     /* Leaderboard */
     #leaderboard {
       display: flex;
@@ -203,6 +219,7 @@
     <button id="upgrade-blink-btn"      class="upgrade-btn" disabled>Blink ◈  —  60 pts</button>
   </div>
   <div id="leaderboard"></div>
+  <button id="reset-btn">⟳ Reset Game</button>
   <footer>
     Players move automatically every second &nbsp;·&nbsp;
     Eat yellow pellets for bonus points &nbsp;·&nbsp;
