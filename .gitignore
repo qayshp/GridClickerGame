@@ -47,7 +47,8 @@ Thumbs.db
 # Replit
 .cache/
 .local/
-# Scala / SBT
+
+# Scala / SBT — compiled output and caches
 game/target/
 game/project/target/
 game/project/project/
@@ -55,3 +56,7 @@ game/.bsp/
 *.class
 *.jar
 game/client/target/
+game/server/target/
+game/shared/.js/target/
+game/shared/.jvm/target/
+game/**/.bsp/
