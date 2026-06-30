@@ -14,7 +14,7 @@ val GRID_H      = 20
 val FOOD_COUNT  = 20
 val FOOD_POINTS = 5
 
-val UPGRADE_COSTS = Map("pathfinder" -> 5, "sprint" -> 15, "magnet" -> 25)
+val UPGRADE_COSTS = Map("pathfinder" -> 5, "sprint" -> 15, "bounty" -> 20, "magnet" -> 25, "aura" -> 40)
 
 val PLAYER_COLORS = Vector(
   "#e74c3c", "#3498db", "#2ecc71", "#f39c12",
@@ -158,10 +158,12 @@ class GameState(
               if nx == p.x && ny == p.y then IO.unit
               else
                 for
-                  food    <- foodRef.get
-                  ateFood  = food.contains((nx, ny))
-                  bonus    = if ateFood then FOOD_POINTS else 0
-                  moved    = p.copy(x = nx, y = ny, points = p.points + 1 + bonus)
+                  food      <- foodRef.get
+                  ateFood    = food.contains((nx, ny))
+                  foodBonus  = if !ateFood then 0
+                               else if p.upgrades.contains("bounty") then FOOD_POINTS * 2
+                               else FOOD_POINTS
+                  moved      = p.copy(x = nx, y = ny, points = p.points + 1 + foodBonus)
                   _       <- playersRef.update(_.updated(playerId, moved))
                   _       <- if ateFood then eatFood(food, nx, ny) else IO.unit
                 yield ()
@@ -188,6 +190,28 @@ class GameState(
                 spawnOne(ps, without) match
                   case None         => IO.unit
                   case Some(newPos) => foodRef.set(without + newPos)
+    yield ()
+
+  // Collect any food adjacent to p (aura upgrade)
+  private def applyAura(p: Player): IO[Unit] =
+    val adjacent = Set(
+      (p.x - 1, p.y), (p.x + 1, p.y),
+      (p.x, p.y - 1), (p.x, p.y + 1)
+    ).filter((x, y) => x >= 0 && x < GRID_W && y >= 0 && y < GRID_H)
+    for
+      food  <- foodRef.get
+      nearby = food.intersect(adjacent)
+      _     <- nearby.toList.traverse_ { pos =>
+                 for
+                   cur <- foodRef.get                        // re-check in case a prior eat cleared it
+                   _   <- if !cur.contains(pos) then IO.unit
+                          else
+                            val bonus = if p.upgrades.contains("bounty") then FOOD_POINTS * 2 else FOOD_POINTS
+                            playersRef.update { ps =>
+                              ps.get(p.id).fold(ps)(c => ps.updated(p.id, c.copy(points = c.points + bonus)))
+                            } *> eatFood(cur, pos._1, pos._2)
+                 yield ()
+               }
     yield ()
 
   // Pure: step the second-closest pellet one square toward p
@@ -217,8 +241,10 @@ class GameState(
                 val steps = if p.upgrades.contains("sprint") then 2 else 1
                 List.fill(steps)(()).traverse_(_ => movePlayer(p.id, dx, dy))
               }
+      ps2  <- playersRef.get   // re-read after moves for accurate positions
+      // Aura: collect adjacent food for each aura player
+      _    <- ps2.values.toList.filter(p => p.online && p.upgrades.contains("aura")).traverse_(applyAura)
       // Magnet: pull second-closest pellet one step toward each owner
-      ps2  <- playersRef.get
       _    <- ps2.values.toList.filter(p => p.online && p.upgrades.contains("magnet")).traverse_ { p =>
                 foodRef.update(applyMagnet(p, _))
               }
