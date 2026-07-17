@@ -1,62 +1,21 @@
-# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
-
-# compiled output
-dist
-tmp
-out-tsc
+# JavaScript and TypeScript
+node_modules/
+dist/
 *.tsbuildinfo
-.expo
-.expo-shared
+.env
+.env.*
+!.env.example
 
-# dependencies
-node_modules
-
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# misc
-/.sass-cache
-/connect.lock
-/coverage
-/libpeerconnection.log
-npm-debug.log
-yarn-error.log
-testem.log
-/typings
-
-# System Files
-.DS_Store
-Thumbs.db
-
-.cursor/rules/nx-rules.mdc
-.github/instructions/nx.instructions.md
-
-# Replit
+# Local tooling and operating-system files
 .cache/
 .local/
+.idea/
+.vscode/
+.DS_Store
 
-# Scala / SBT — compiled output and caches
-game/target/
-game/project/target/
+# Scala and SBT
+game/**/target/
 game/project/project/
-game/.bsp/
+game/**/.bsp/
 *.class
 *.jar
-game/client/target/
-game/server/target/
-game/shared/.js/target/
-game/shared/.jvm/target/
-game/**/.bsp/

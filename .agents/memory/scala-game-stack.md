@@ -12,9 +12,9 @@ description: Running a full Scala stack (Scala.js client + http4s WebSocket serv
 ## Architecture
 
 - `game/shared/` — upickle-serialized protocol, cross-compiled for JVM + Scala.js
-- `game/client/` — Scala.js game; output at `game/client/target/scala-3.3.4/client-fastopt/main.js`
+- `game/client/` — Scala.js game; development output is `client-fastopt/main.js` and production output is `client-opt/main.js`
 - `game/server/` — http4s-ember WebSocket server; reads `SCALA_PORT` env var
-- `artifacts/pixel-game/` — react-vite artifact (shell only); vite `publicDir` points to the Scala.js output dir; `/ws` proxied to Scala server
+- `artifacts/pixel-game/` — Vite web shell; `publicDir` selects the matching Scala.js output and `/ws` proxies to the Scala server
 
 ## Key gotchas
 

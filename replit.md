@@ -1,42 +1,46 @@
 # Pixel Grid — Cooperative Game
 
-A cooperative pixel art grid game where multiple players move characters on a shared 30×20 grid in real time. Full Scala stack: Scala.js client + http4s WebSocket server.
+Pixel Grid is a full-stack Scala browser game: Scala.js renders the canvas
+client, http4s owns the real-time simulation, and Express provides browser
+authentication plus PostgreSQL persistence.
 
-## Run & Operate
+## Run
 
-- **Scala Game Server** workflow — `cd game && SCALA_PORT=9000 sbt "client/fastLinkJS; server/run"` (compiles Scala.js then starts http4s on port 9000)
-- **artifacts/pixel-game: web** workflow — `pnpm --filter @workspace/pixel-game run dev` (vite dev server, proxies `/ws` → Scala server)
-- To recompile Scala.js only: `cd game && sbt client/fastLinkJS`
-- To restart the server only: kill the workflow and rerun (SBT caches, restarts in ~5s)
+- Project workflow: `cd game && SCALA_PORT=9000 sbt "client/fastLinkJS; server/run"`
+- API service: `PORT=8080 pnpm --filter @workspace/api-server dev`
+- Web service: `PORT=24402 SCALA_PORT=9000 pnpm --filter @workspace/pixel-game dev`
+- Scala.js rebuild: `cd game && sbt client/fastLinkJS`
 
-## Stack
+The Replit artifact definitions start the API and web services. The root
+workflow starts the Scala server.
 
-- **Game client**: Scala.js 1.18.2 + scalajs-dom, compiled to `game/client/target/scala-3.3.4/client-fastopt/main.js`
-- **Game server**: Scala 3.3.4 + http4s-ember (WebSocket) + cats-effect + upickle
-- **Frontend shell**: Vite dev server at `/` (serves the compiled Scala.js + proxies `/ws`)
-- **Shared protocol**: `game/shared/` cross-compiled for JVM + Scala.js (upickle JSON)
-- SBT 1.10.11, Java GraalVM 22.3.1
+## Active repository map
 
-## Where things live
+- `game/shared`: upickle WebSocket protocol shared by JVM and Scala.js
+- `game/client`: Scala.js canvas renderer and DOM HUD controller
+- `game/server`: authoritative simulation and WebSocket server
+- `artifacts/pixel-game`: Vite shell that builds and serves generated `main.js` and
+  proxies `/api` and `/ws`
+- `artifacts/api-server`: browser OIDC, health check, and game persistence API
+- `lib/api-spec`: OpenAPI source used to generate `lib/api-zod`
+- `lib/api-zod`: generated request/response schemas used by the API server
+- `lib/db`: Drizzle schema and PostgreSQL connection
+- `scripts/post-merge.sh`: dependency install and database schema sync
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+## Architecture
 
-## Architecture decisions
-
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
-
-## Product
-
-_Describe the high-level user-facing capabilities of this app once they exist._
-
-## User preferences
-
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- The http4s server owns gameplay state and advances it once per second.
+- The Scala.js client renders server snapshots; canvas handles the playfield
+  while the DOM handles status, shop controls, leaderboard, and reset.
+- Logged-in players use Replit OIDC and PostgreSQL persistence. Guests can play
+  without authentication and are session-only.
+- Vite serves fast-linked Scala.js during development and the optimized linker
+  output in production.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Compile `client/fastLinkJS` before starting the Vite development server.
+  The production web build runs `client/fullLinkJS` itself.
+- Set `SCALA_PORT` consistently in the Scala server and Vite proxy.
+- The API server requires `DATABASE_URL`; browser OIDC also requires
+  `REPL_ID`.

@@ -79,17 +79,28 @@ cd game && sbt "client/fastLinkJS; server/compile"
 
 **Start the game server** (port 9000):
 ```bash
-cd game && sbt "server/run"
+cd game && SCALA_PORT=9000 sbt "server/run"
 ```
 
 **Start the API server** (port 8080):
 ```bash
-pnpm --filter api-server dev
+PORT=8080 pnpm --filter @workspace/api-server dev
 ```
 
-**Start the frontend** (Vite, port from `$PORT`):
+**Start the frontend** (Vite, port 24402):
 ```bash
-pnpm --filter pixel-game dev
+PORT=24402 SCALA_PORT=9000 pnpm --filter @workspace/pixel-game dev
 ```
 
 After recompiling Scala.js, the Vite dev server picks up the new JS automatically — no restart needed. Only restart the game server (`server/run`) after changing server-side Scala.
+
+**Create a production web build:**
+```bash
+pnpm --filter @workspace/pixel-game build
+```
+
+The production build runs the optimized Scala.js linker before Vite, so it is
+self-contained on a fresh checkout.
+
+Run `pnpm build` from the repository root to validate TypeScript, build both
+services, link the Scala.js client, and compile the Scala server.

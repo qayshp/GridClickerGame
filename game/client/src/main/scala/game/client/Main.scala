@@ -28,7 +28,6 @@ object Main:
   var animating: Boolean            = false
   var myId: String  = ""
   var ws: WebSocket = null
-  var connected     = false
 
   def computeCell(): Int =
     val availW = dom.window.innerWidth.toInt - 4
@@ -52,7 +51,6 @@ object Main:
 
     resize()
     dom.window.addEventListener("resize", (_: Event) => resize())
-    renderFrame(ctx, canvas)
     status.textContent = "Checking login…"
 
     def startGuest(): Unit =
@@ -95,6 +93,7 @@ object Main:
     val wsUrl = s"${proto}//${dom.window.location.host}/ws"
 
     ws = new WebSocket(wsUrl)
+    var heartbeatTimer = 0
 
     // Wire up the shop buttons
     val pfBtn = dom.document.getElementById("upgrade-pathfinder-btn")
@@ -126,10 +125,10 @@ object Main:
       )
 
     ws.onopen = (_: Event) =>
-      connected = true
       myId = if userId.nonEmpty then userId
              else s"p-${(js.Math.random() * 0xFFFFFFF).toInt.toHexString}"
       send(ClientMsg.Join(playerName, myId, userId))
+      heartbeatTimer = dom.window.setInterval(() => send(ClientMsg.Heartbeat()), 30000)
       val shopPanel = dom.document.getElementById("shop-panel")
       if shopPanel != null then
         shopPanel.asInstanceOf[html.Div].style.display = "flex"
@@ -162,7 +161,7 @@ object Main:
       renderFrame(ctx, canvas)
 
     ws.onclose = (_: Event) =>
-      connected = false
+      if heartbeatTimer != 0 then dom.window.clearInterval(heartbeatTimer)
       status.textContent = "Disconnected. Refresh to reconnect."
 
     ws.onerror = (_: Event) =>

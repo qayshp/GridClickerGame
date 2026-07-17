@@ -16,18 +16,16 @@ case class Player(
 sealed trait ClientMsg derives ReadWriter
 object ClientMsg:
   case class Join(name: String, clientId: String, userId: String) extends ClientMsg derives ReadWriter
-  case class Move(dx: Int, dy: Int) extends ClientMsg derives ReadWriter
+  case class Heartbeat() extends ClientMsg derives ReadWriter
   case class BuyUpgrade(upgradeId: String) extends ClientMsg derives ReadWriter
   case class Reset() extends ClientMsg derives ReadWriter
 
 case class FoodPos(x: Int, y: Int) derives ReadWriter
-case class Monster(id: Int, x: Int, y: Int) derives ReadWriter
+case class Monster(x: Int, y: Int) derives ReadWriter
 
 case class ServerState(
   players: Map[String, Player],
   food: List[FoodPos],
-  gridW: Int,
-  gridH: Int,
   eaten: List[FoodPos],
   wandered: List[FoodPos],
   monsters: List[Monster],

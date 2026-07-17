@@ -1,5 +1,11 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, usersTable } from "@workspace/db";
+import {
+  GetPlayerGameDataParams,
+  GetPlayerGameDataResponse,
+  SavePlayerGameDataBody,
+  SavePlayerGameDataResponse,
+} from "@workspace/api-zod";
 import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -8,7 +14,12 @@ const DEFAULT_X = 15;
 const DEFAULT_Y = 10;
 
 router.get("/game/user/:userId", async (req: Request, res: Response) => {
-  const { userId } = req.params;
+  const params = GetPlayerGameDataParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: "Invalid userId" });
+    return;
+  }
+
   const [row] = await db
     .select({
       gameX: usersTable.gameX,
@@ -17,38 +28,40 @@ router.get("/game/user/:userId", async (req: Request, res: Response) => {
       upgrades: usersTable.upgrades,
     })
     .from(usersTable)
-    .where(eq(usersTable.id, userId));
+    .where(eq(usersTable.id, params.data.userId));
 
-  res.json({
-    x: row?.gameX ?? DEFAULT_X,
-    y: row?.gameY ?? DEFAULT_Y,
-    points: row?.points ?? 0,
-    upgrades: row?.upgrades ?? "",
-  });
+  res.json(
+    GetPlayerGameDataResponse.parse({
+      x: row?.gameX ?? DEFAULT_X,
+      y: row?.gameY ?? DEFAULT_Y,
+      points: row?.points ?? 0,
+      upgrades: row?.upgrades ?? "",
+    }),
+  );
 });
 
 router.post("/game/position", async (req: Request, res: Response) => {
-  const { userId, x, y, points, upgrades } = req.body as {
-    userId: string;
-    x: number;
-    y: number;
-    points: number;
-    upgrades?: string;
-  };
-  if (!userId || x == null || y == null) {
-    res.status(400).json({ error: "Missing userId, x, or y" });
+  const body = SavePlayerGameDataBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: "Invalid player state" });
     return;
   }
+  const { userId, x, y, points, upgrades } = body.data;
+  if (![x, y, points].every(Number.isSafeInteger)) {
+    res.status(400).json({ error: "Invalid player state" });
+    return;
+  }
+
   await db
     .update(usersTable)
     .set({
       gameX: x,
       gameY: y,
-      ...(points != null ? { points } : {}),
-      ...(upgrades != null ? { upgrades } : {}),
+      points,
+      upgrades,
     })
     .where(eq(usersTable.id, userId));
-  res.json({ ok: true });
+  res.json(SavePlayerGameDataResponse.parse({ ok: true }));
 });
 
 export default router;

@@ -41,7 +41,6 @@ async function refreshIfExpired(
       config,
       session.refresh_token,
     );
-    session.access_token = tokens.access_token;
     session.refresh_token = tokens.refresh_token ?? session.refresh_token;
     session.expires_at = tokens.expiresIn()
       ? now + tokens.expiresIn()!

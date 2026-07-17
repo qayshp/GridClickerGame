@@ -1,7 +1,6 @@
 package game.server
 
 import cats.effect.*
-import cats.syntax.all.*
 import com.comcast.ip4s.*
 import fs2.*
 import org.http4s.*
@@ -12,6 +11,7 @@ import org.http4s.websocket.WebSocketFrame
 import game.shared.*
 import upickle.default.*
 import java.util.UUID
+import scala.concurrent.duration.*
 
 object Server extends IOApp:
   def run(args: List[String]): IO[ExitCode] =
@@ -23,6 +23,7 @@ object Server extends IOApp:
       _ <- EmberServerBuilder.default[IO]
         .withHost(ipv4"0.0.0.0")
         .withPort(Port.fromInt(port).get)
+        .withIdleTimeout(2.minutes)
         .withHttpWebSocketApp(wsb => routes(state, wsb).orNotFound)
         .build
         .useForever
@@ -44,8 +45,6 @@ object Server extends IOApp:
               IO.fromEither(scala.util.Try(read[ClientMsg](text)).toEither)
                 .flatMap(state.handle(connId, _))
                 .handleErrorWith(err => IO.println(s"[WS] Error: $err"))
-            case WebSocketFrame.Close(_) =>
-              state.disconnect(connId)
             case _ => IO.unit
 
           resp <- wsb

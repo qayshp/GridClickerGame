@@ -20,10 +20,6 @@ export const HealthCheckResponse = zod.object({
 /**
  * @summary Get the currently authenticated user
  */
-export const GetCurrentAuthUserHeader = zod.object({
-  "Authorization": zod.string().optional().describe('Opaque session token — `Bearer <sid>`.')
-})
-
 export const GetCurrentAuthUserResponse = zod.object({
   "user": zod.union([zod.object({
   "id": zod.string(),
@@ -60,45 +56,64 @@ export const HandleBrowserLoginCallbackResponse = zod.void()
 /**
  * @summary Clear the session and begin OIDC logout
  */
-export const LogoutBrowserSessionHeader = zod.object({
-  "Authorization": zod.string().optional().describe('Opaque session token — `Bearer <sid>`.')
-})
-
 export const LogoutBrowserSessionResponse = zod.void()
 
 
 /**
- * @summary Exchange a mobile OIDC code for a session token
+ * @summary Load persisted state for a player
  */
 
 
 
-
-
-
-
-export const ExchangeMobileAuthorizationCodeBody = zod.object({
-  "code": zod.string().min(1),
-  "code_verifier": zod.string().min(1),
-  "redirect_uri": zod.string().url().min(1),
-  "state": zod.string().min(1),
-  "nonce": zod.string().min(1).optional()
+export const GetPlayerGameDataParams = zod.object({
+  "userId": zod.coerce.string().min(1)
 })
 
-export const ExchangeMobileAuthorizationCodeResponse = zod.object({
-  "token": zod.string()
+export const getPlayerGameDataResponseXMin = 0;
+export const getPlayerGameDataResponseXMax = 29;
+
+export const getPlayerGameDataResponseYMin = 0;
+export const getPlayerGameDataResponseYMax = 19;
+
+export const getPlayerGameDataResponsePointsMin = 0;
+export const getPlayerGameDataResponsePointsMax = 2147483647;
+
+
+
+export const GetPlayerGameDataResponse = zod.object({
+  "x": zod.number().min(getPlayerGameDataResponseXMin).max(getPlayerGameDataResponseXMax),
+  "y": zod.number().min(getPlayerGameDataResponseYMin).max(getPlayerGameDataResponseYMax),
+  "points": zod.number().min(getPlayerGameDataResponsePointsMin).max(getPlayerGameDataResponsePointsMax),
+  "upgrades": zod.string()
 })
 
 
 /**
- * @summary Delete a mobile session token
+ * @summary Persist a player's current state
  */
-export const LogoutMobileSessionHeader = zod.object({
-  "Authorization": zod.string().optional().describe('Opaque session token — `Bearer <sid>`.')
-})
+export const savePlayerGameDataBodyOneXMin = 0;
+export const savePlayerGameDataBodyOneXMax = 29;
 
-export const LogoutMobileSessionResponse = zod.object({
-  "success": zod.boolean()
+export const savePlayerGameDataBodyOneYMin = 0;
+export const savePlayerGameDataBodyOneYMax = 19;
+
+export const savePlayerGameDataBodyOnePointsMin = 0;
+export const savePlayerGameDataBodyOnePointsMax = 2147483647;
+
+
+
+
+export const SavePlayerGameDataBody = zod.object({
+  "x": zod.number().min(savePlayerGameDataBodyOneXMin).max(savePlayerGameDataBodyOneXMax),
+  "y": zod.number().min(savePlayerGameDataBodyOneYMin).max(savePlayerGameDataBodyOneYMax),
+  "points": zod.number().min(savePlayerGameDataBodyOnePointsMin).max(savePlayerGameDataBodyOnePointsMax),
+  "upgrades": zod.string()
+}).and(zod.object({
+  "userId": zod.string().min(1)
+}))
+
+export const SavePlayerGameDataResponse = zod.object({
+  "ok": zod.boolean()
 })
 
 

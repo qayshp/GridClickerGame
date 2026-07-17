@@ -5,10 +5,6 @@ version = "1.0.0"
 id = "artifacts/pixel-game"
 router = "path"
 
-[[integratedSkills]]
-name = "react-vite"
-version = "1.0.0"
-
 [[services]]
 name = "web"
 paths = [ "/" ]

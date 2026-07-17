@@ -3,7 +3,6 @@ package game.server
 import cats.effect.*
 import cats.effect.std.*
 import cats.syntax.all.*
-import fs2.*
 import game.shared.*
 import upickle.default.*
 import scala.util.Random
@@ -54,10 +53,20 @@ def dirTowardFood(p: Player, food: Set[(Int, Int)], dirs: Vector[(Int, Int)]): (
     else if Math.abs(rx) >= Math.abs(ry) then (rx.sign, 0)
     else (0, ry.sign)
 
+private case class ConnectionPlayer(playerId: String, userId: Option[String])
+private case class ScheduledSave(
+  userId: String,
+  player: Player,
+  previous: Option[Deferred[IO, Unit]],
+  completion: Deferred[IO, Unit]
+)
+
 class GameState(
   playersRef:    Ref[IO, Map[String, Player]],
   connsRef:      Ref[IO, Map[String, Queue[IO, Option[String]]]],
-  connPlayerRef: Ref[IO, Map[String, String]],
+  connPlayersRef: Ref[IO, Map[String, ConnectionPlayer]],
+  lifecycleMutex: Mutex[IO],
+  saveTailsRef:   Ref[IO, Map[String, Deferred[IO, Unit]]],
   colorIdxRef:   Ref[IO, Int],
   foodRef:       Ref[IO, Set[(Int, Int)]],
   eatenRef:      Ref[IO, List[(Int, Int)]],
@@ -78,14 +87,13 @@ class GameState(
       json      = write(ServerState(
                     ps,
                     food.map(p => FoodPos(p._1, p._2)).toList,
-                    GRID_W, GRID_H,
                     eaten.map(p => FoodPos(p._1, p._2)),
                     wandered.map(p => FoodPos(p._1, p._2)),
                     monsters,
                     ticks
                   ))
       conns <- connsRef.get
-      _     <- conns.values.toList.parTraverse_(_.offer(Some(json)))
+      _     <- conns.values.toList.parTraverse_(_.tryOffer(Some(json)).void)
     yield ()
 
   def connect(connId: String): IO[Queue[IO, Option[String]]] =
@@ -94,26 +102,79 @@ class GameState(
       _ <- connsRef.update(_ + (connId -> q))
     yield q
 
+  private def persistScheduled(save: ScheduledSave): IO[Unit] =
+    val persistLatest =
+      save.previous.traverse_(_.get) *>
+        saveTailsRef.get.map(_.get(save.userId).contains(save.completion)).flatMap {
+          case false => IO.unit
+          case true =>
+            val player = save.player
+            GameApi.savePlayerData(
+              save.userId,
+              player.x,
+              player.y,
+              player.points,
+              player.upgrades
+            )
+        }
+
+    IO.uncancelable(_ => persistLatest).guarantee {
+      save.completion.complete(()).void *>
+        saveTailsRef.update { tails =>
+          if tails.get(save.userId).contains(save.completion) then tails - save.userId
+          else tails
+        }
+    }
+
   def disconnect(connId: String): IO[Unit] =
-    for
-      connPlayer <- connPlayerRef.get
-      pidOpt      = connPlayer.get(connId)
-      conns      <- connsRef.get
-      _          <- conns.get(connId).traverse_(_.offer(None))
-      _          <- connsRef.update(_ - connId)
-      _          <- connPlayerRef.update(_ - connId)
-      _          <- pidOpt.traverse_ { pid =>
-                      for
-                        ps <- playersRef.get
-                        _  <- ps.get(pid).traverse_ { p =>
-                                val ghost = p.copy(online = false)
-                                playersRef.update(_.updated(pid, ghost)) *>
-                                GameApi.savePlayerData(pid, p.x, p.y, p.points, p.upgrades)
-                              }
-                        _  <- broadcastCurrent()
-                      yield ()
-                    }
-    yield ()
+    IO.uncancelable { _ =>
+      for
+        queue <- connsRef.modify(conns => (conns - connId, conns.get(connId)))
+        _     <- queue.traverse_(_.tryOffer(None).void)
+        result <- lifecycleMutex.lock.surround {
+                    for
+                      finalConnection <- connPlayersRef.modify { connections =>
+                                           val connection = connections.get(connId)
+                                           val remaining  = connections - connId
+                                           val isLast     = connection.filterNot { current =>
+                                             remaining.values.exists(_.playerId == current.playerId)
+                                           }
+                                           (remaining, isLast)
+                                         }
+                      result <- finalConnection match
+                                  case None => IO.pure((false, Option.empty[(String, Player)]))
+                                  case Some(connection) =>
+                                    playersRef.modify { players =>
+                                      players.get(connection.playerId) match
+                                        case None =>
+                                          (players, (false, Option.empty[(String, Player)]))
+                                        case Some(player) =>
+                                          connection.userId match
+                                            case Some(userId) =>
+                                              val next = players.updated(
+                                                connection.playerId,
+                                                player.copy(online = false)
+                                              )
+                                              (next, (true, Some((userId, player))))
+                                            case None =>
+                                              (players - connection.playerId, (true, None))
+                                    }
+                      (changed, save) = result
+                      scheduled <- save.traverse { case (userId, player) =>
+                                     for
+                                       completion <- Deferred[IO, Unit]
+                                       previous <- saveTailsRef.modify { tails =>
+                                                     (tails.updated(userId, completion), tails.get(userId))
+                                                   }
+                                     yield ScheduledSave(userId, player, previous, completion)
+                                   }
+                    yield (changed, scheduled)
+                  }
+        (changed, scheduled) = result
+        _ <- scheduled.traverse_(persistScheduled)
+        _ <- if changed then broadcastCurrent() else IO.unit
+      yield ()
+    }
 
   def handle(connId: String, msg: ClientMsg): IO[Unit] = msg match
     case ClientMsg.Join(name, clientId, userId) =>
@@ -121,74 +182,97 @@ class GameState(
                      else if clientId.nonEmpty then clientId
                      else connId
       for
-        _        <- connPlayerRef.update(_.updated(connId, playerId))
-        existing <- playersRef.get.map(_.get(playerId))
-        _        <- existing match
-                      case Some(p) =>
-                        playersRef.update(_.updated(playerId, p.copy(name = name, online = true)))
-                      case None =>
+        alreadyLoaded <- playersRef.get.map(_.contains(playerId))
+        saved         <- if alreadyLoaded then IO.pure(None) else GameApi.loadPlayerData(userId)
+        joined <- lifecycleMutex.lock.surround {
+          for
+            stillConnected <- connsRef.get.map(_.contains(connId))
+            joined <- if !stillConnected then IO.pure(false)
+                      else
                         for
-                          idx  <- colorIdxRef.getAndUpdate(i => (i + 1) % PLAYER_COLORS.size)
-                          color = PLAYER_COLORS(idx)
-                          safeName = name.take(12).trim match
-                            case "" => "Player"
-                            case n  => n
-                          saved    <- GameApi.loadPlayerData(playerId)
-                          sx        = saved.map(_.x).getOrElse(GRID_W / 2)
-                          sy        = saved.map(_.y).getOrElse(GRID_H / 2)
-                          sp        = saved.map(_.points).getOrElse(0)
-                          su        = saved.map(_.upgrades).getOrElse("").split(",").filter(_.nonEmpty).toSet
-                          p         = Player(playerId, sx, sy, color, safeName, online = true, points = sp, upgrades = su)
-                          _        <- playersRef.update(_.updated(playerId, p))
-                        yield ()
-        _ <- broadcastCurrent()
+                          _ <- connPlayersRef.update(_.updated(
+                                 connId,
+                                 ConnectionPlayer(playerId, Option(userId).filter(_.nonEmpty))
+                               ))
+                          existing <- playersRef.get.map(_.get(playerId))
+                          _ <- existing match
+                                 case Some(p) =>
+                                   playersRef.update(_.updated(playerId, p.copy(name = name, online = true)))
+                                 case None =>
+                                   for
+                                     idx  <- colorIdxRef.getAndUpdate(i => (i + 1) % PLAYER_COLORS.size)
+                                     color = PLAYER_COLORS(idx)
+                                     safeName = name.take(12).trim match
+                                       case "" => "Player"
+                                       case n  => n
+                                     sx        = saved.map(_.x).getOrElse(GRID_W / 2)
+                                     sy        = saved.map(_.y).getOrElse(GRID_H / 2)
+                                     sp        = saved.map(_.points).getOrElse(0)
+                                     su        = saved.map(_.upgrades).getOrElse("").split(",").filter(_.nonEmpty).toSet
+                                     p         = Player(playerId, sx, sy, color, safeName, online = true, points = sp, upgrades = su)
+                                     _        <- playersRef.update(_.updated(playerId, p))
+                                   yield ()
+                        yield true
+          yield joined
+        }
+        _ <- if joined then broadcastCurrent() else IO.unit
       yield ()
-
-    case ClientMsg.Move(_, _) => IO.unit   // movement is server-driven
 
     case ClientMsg.Reset() =>
       reset()
 
+    case ClientMsg.Heartbeat() =>
+      IO.unit
+
     case ClientMsg.BuyUpgrade(upgradeId) =>
       val cost = UPGRADE_COSTS.getOrElse(upgradeId, Int.MaxValue)
       for
-        connPlayer <- connPlayerRef.get
-        _          <- connPlayer.get(connId).traverse_ { pid =>
-                        for
-                          ps <- playersRef.get
-                          _  <- ps.get(pid).traverse_ { p =>
-                                  if p.points >= cost && !p.upgrades.contains(upgradeId) then
-                                    val upgraded = p.copy(
-                                      points   = p.points - cost,
-                                      upgrades = p.upgrades + upgradeId
-                                    )
-                                    playersRef.update(_.updated(pid, upgraded))
-                                  else IO.unit
-                                }
-                          _ <- broadcastCurrent()
-                        yield ()
-                      }
+        connPlayers <- connPlayersRef.get
+        changed <- connPlayers.get(connId) match
+                     case None => IO.pure(false)
+                     case Some(connection) =>
+                       playersRef.modify { players =>
+                         players.get(connection.playerId) match
+                           case Some(player)
+                               if player.online &&
+                                  player.points >= cost &&
+                                  !player.upgrades.contains(upgradeId) =>
+                             val upgraded = player.copy(
+                               points   = player.points - cost,
+                               upgrades = player.upgrades + upgradeId
+                             )
+                             (players.updated(connection.playerId, upgraded), true)
+                           case _ => (players, false)
+                       }
+        _ <- if changed then broadcastCurrent() else IO.unit
       yield ()
 
   private def movePlayer(playerId: String, dx: Int, dy: Int): IO[Unit] =
     for
-      ps <- playersRef.get
-      _  <- ps.get(playerId).traverse_ { p =>
-              val nx = (p.x + dx).max(0).min(GRID_W - 1)
-              val ny = (p.y + dy).max(0).min(GRID_H - 1)
-              if nx == p.x && ny == p.y then IO.unit
-              else
-                for
-                  food      <- foodRef.get
-                  ateFood    = food.contains((nx, ny))
-                  foodBonus  = if !ateFood then 0
-                               else if p.upgrades.contains("bounty") then FOOD_POINTS * 2
-                               else FOOD_POINTS
-                  moved      = p.copy(x = nx, y = ny, points = p.points + 1 + foodBonus)
-                  _       <- playersRef.update(_.updated(playerId, moved))
-                  _       <- if ateFood then eatenRef.update(_ :+ (nx, ny)) *> eatFood(food, nx, ny) else IO.unit
-                yield ()
-            }
+      food <- foodRef.get
+      move <- playersRef.modify { players =>
+                players.get(playerId) match
+                  case Some(player) if player.online =>
+                    val nx = (player.x + dx).max(0).min(GRID_W - 1)
+                    val ny = (player.y + dy).max(0).min(GRID_H - 1)
+                    if nx == player.x && ny == player.y then (players, None)
+                    else
+                      val ateFood   = food.contains((nx, ny))
+                      val foodBonus = if !ateFood then 0
+                                      else if player.upgrades.contains("bounty") then FOOD_POINTS * 2
+                                      else FOOD_POINTS
+                      val moved = player.copy(
+                        x = nx,
+                        y = ny,
+                        points = player.points + 1 + foodBonus
+                      )
+                      (players.updated(playerId, moved), Some((nx, ny, ateFood)))
+                  case _ => (players, None)
+              }
+      _ <- move.traverse_ { case (nx, ny, ateFood) =>
+             if ateFood then eatenRef.update(_ :+ (nx, ny)) *> eatFood(food, nx, ny)
+             else IO.unit
+           }
     yield ()
 
   private def eatFood(food: Set[(Int, Int)], nx: Int, ny: Int): IO[Unit] =
@@ -227,10 +311,19 @@ class GameState(
                    cur <- foodRef.get                        // re-check in case a prior eat cleared it
                    _   <- if !cur.contains(pos) then IO.unit
                           else
-                            val bonus = if p.upgrades.contains("bounty") then FOOD_POINTS * 2 else FOOD_POINTS
-                            playersRef.update { ps =>
-                              ps.get(p.id).fold(ps)(c => ps.updated(p.id, c.copy(points = c.points + bonus)))
-                            } *> eatenRef.update(_ :+ pos) *> eatFood(cur, pos._1, pos._2)
+                            for
+                              awarded <- playersRef.modify { players =>
+                                           players.get(p.id) match
+                                             case Some(current) if current.online =>
+                                               val bonus =
+                                                 if current.upgrades.contains("bounty") then FOOD_POINTS * 2
+                                                 else FOOD_POINTS
+                                               val updated = current.copy(points = current.points + bonus)
+                                               (players.updated(p.id, updated), true)
+                                             case _ => (players, false)
+                                         }
+                              _ <- (if awarded then eatenRef.update(_ :+ pos) *> eatFood(cur, pos._1, pos._2) else IO.unit)
+                            yield ()
                  yield ()
                }
     yield ()
@@ -293,11 +386,21 @@ class GameState(
                      spawnOne(othersMap, food ++ mPos) match
                        case None         => IO.unit   // grid full — no damage, no move
                        case Some((tx,ty)) =>
-                         playersRef.update(_.updated(p.id, p.copy(x = tx, y = ty)))
+                         playersRef.update { players =>
+                           players.get(p.id) match
+                             case Some(current) if current.online =>
+                               players.updated(p.id, current.copy(x = tx, y = ty))
+                             case _ => players
+                         }
                    else
-                     playersRef.update { ps =>
-                       val cur = ps.getOrElse(p.id, p)
-                       ps.updated(p.id, cur.copy(points = (cur.points - MONSTER_DAMAGE).max(0)))
+                     playersRef.update { players =>
+                       players.get(p.id) match
+                         case Some(current) if current.online =>
+                           players.updated(
+                             p.id,
+                             current.copy(points = (current.points - MONSTER_DAMAGE).max(0))
+                           )
+                         case _ => players
                      }
                  }
     yield ()
@@ -341,7 +444,7 @@ class GameState(
       _ <- eatenRef.set(Nil)
       _ <- wanderRef.set(Nil)
       _ <- monstersRef.set(
-             List.tabulate(MONSTER_COUNT)(i => Monster(i, Random.nextInt(GRID_W), Random.nextInt(GRID_H)))
+             List.fill(MONSTER_COUNT)(Monster(Random.nextInt(GRID_W), Random.nextInt(GRID_H)))
            )
       _ <- tickCountRef.set(0)
       _ <- broadcastCurrent()
@@ -355,12 +458,14 @@ object GameState:
     for
       players    <- Ref.of[IO, Map[String, Player]](Map.empty)
       conns      <- Ref.of[IO, Map[String, Queue[IO, Option[String]]]](Map.empty)
-      connPlayer <- Ref.of[IO, Map[String, String]](Map.empty)
+      connPlayers <- Ref.of[IO, Map[String, ConnectionPlayer]](Map.empty)
+      lifecycle  <- Mutex[IO]
+      saveTails  <- Ref.of[IO, Map[String, Deferred[IO, Unit]]](Map.empty)
       colorIdx   <- Ref.of[IO, Int](0)
       food       <- Ref.of[IO, Set[(Int, Int)]](initialFood(FOOD_COUNT))
       eaten      <- Ref.of[IO, List[(Int, Int)]](Nil)
       wandered   <- Ref.of[IO, List[(Int, Int)]](Nil)
-      initMs      = List.tabulate(MONSTER_COUNT)(i => Monster(i, Random.nextInt(GRID_W), Random.nextInt(GRID_H)))
+      initMs      = List.fill(MONSTER_COUNT)(Monster(Random.nextInt(GRID_W), Random.nextInt(GRID_H)))
       monsters   <- Ref.of[IO, List[Monster]](initMs)
       tickCount  <- Ref.of[IO, Int](0)
-    yield GameState(players, conns, connPlayer, colorIdx, food, eaten, wandered, monsters, tickCount)
+    yield GameState(players, conns, connPlayers, lifecycle, saveTails, colorIdx, food, eaten, wandered, monsters, tickCount)

@@ -4,7 +4,8 @@ val scala3 = "3.3.4"
 
 inThisBuild(Seq(
   scalaVersion := scala3,
-  organization := "game"
+  organization := "game",
+  scalacOptions += "-Wunused:all"
 ))
 
 lazy val shared = crossProject(JSPlatform, JVMPlatform)

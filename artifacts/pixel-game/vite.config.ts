@@ -1,19 +1,18 @@
 import { defineConfig } from "vite";
-import path from "path";
+import path from "node:path";
 
-const rawPort = process.env.PORT;
-if (!rawPort) throw new Error("PORT environment variable is required.");
+const rawPort = process.env.PORT ?? "24402";
 const port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) throw new Error(`Invalid PORT: "${rawPort}"`);
 
 const basePath = process.env.BASE_PATH ?? "/";
 const scalaPort = process.env.SCALA_PORT ?? "9000";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   base: basePath,
   publicDir: path.resolve(
     import.meta.dirname,
-    "../../game/client/target/scala-3.3.4/client-fastopt"
+    `../../game/client/target/scala-3.3.4/client-${command === "build" ? "opt" : "fastopt"}`
   ),
   appType: "mpa",
   server: {
@@ -45,4 +44,4 @@ export default defineConfig({
       input: path.resolve(import.meta.dirname, "index.html"),
     },
   },
-});
+}));
