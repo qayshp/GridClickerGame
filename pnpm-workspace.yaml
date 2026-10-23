@@ -8,7 +8,7 @@ packages:
 catalog:
   '@types/node': ^25.3.3
   drizzle-orm: ^0.45.2
-  vite: ^7.3.2
+  vite: ^7.3.7
   zod: ^3.25.76
 
 autoInstallPeers: false
